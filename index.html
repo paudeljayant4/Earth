@@ -2,122 +2,136 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ASCENSION — Year 01</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@100;300;400&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ASCENSION — YEAR 01</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:ital,wght@0,100;0,200;1,100&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="lb lbt"></div>
+<div class="lb lbb"></div>
+<div class="co tl"></div><div class="co tr"></div>
+<div class="co bl"></div><div class="co br"></div>
+<div id="sw"></div><div id="hs"></div><div id="emp"></div>
+<canvas id="gCv"></canvas>
+<canvas id="overlayCanvas"></canvas>
+<canvas id="chCv"></canvas>
+<div id="vig"></div>
+<div id="sl"></div>
+<div id="sn"></div>
+<div id="pBar"><div id="pFill"></div></div>
+<div id="ticker"><div id="tickInner"></div></div>
 
-<!-- LETTERBOX -->
-<div class="letterbox top" id="topBar"></div>
-<div class="letterbox bottom" id="bottomBar"></div>
-
-<!-- SCAN LINE SWEEP -->
-<div id="scanSweep"></div>
-
-<!-- FILM GRAIN -->
-<canvas id="grainCanvas"></canvas>
-
-<!-- VIGNETTE -->
-<div id="vignette"></div>
-
-<!-- HUD OVERLAY -->
-<div id="hud" class="hidden">
-
-  <!-- Top Left: System ID -->
-  <div class="hud-panel top-left" id="hudTopLeft">
-    <div class="hud-label">ORBITAL AI V4.7</div>
-    <div class="hud-sub">LOCATION: LOW EARTH ORBIT</div>
-    <div class="hud-sub">SCAN STATUS: <span class="blink cyan">ACTIVE</span></div>
-    <div class="hud-cursor">_</div>
-  </div>
-
-  <!-- Top Right: Clock + Signal -->
-  <div class="hud-panel top-right" id="hudTopRight">
-    <div class="hud-label" id="utcClock">00:00:00 UTC</div>
-    <div class="signal-bars" id="signalBars">
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
-    <div class="hud-sub">SIGNAL INTEGRITY: <span class="cyan" id="signalPct">94%</span></div>
-  </div>
-
-  <!-- Left Data Panel -->
-  <div class="hud-panel left-panel" id="hudLeft">
-    <div class="panel-title">// DATA FEED</div>
-    <div class="data-row">
-      <span class="data-label">POPULATION</span>
-      <span class="data-value cyan" id="popCounter">8,045,311,447</span>
-    </div>
-    <div class="data-row">
-      <span class="data-label">SURFACE TEMP</span>
-      <span class="data-value" id="tempVal">+14.8°C</span>
-    </div>
-    <div class="data-row">
-      <span class="data-label">O₂ LEVEL</span>
-      <span class="data-value cyan">20.95%</span>
-    </div>
-    <div class="data-row">
-      <span class="data-label">AI SCAN</span>
-      <span class="data-value" id="scanPct">0%</span>
-    </div>
-    <div class="scan-bar-wrap"><div class="scan-bar" id="scanBar"></div></div>
-    <div class="data-row">
-      <span class="data-label">THREAT LEVEL</span>
-      <span class="data-value warn">MODERATE</span>
+<!-- DESKTOP HUD -->
+<div id="hud">
+  <div class="hp ptc">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span class="hs2">LAT <span class="cy">51.5°N</span></span>
+      <span class="hl" id="clk" style="font-size:.66rem;">00:00:00 UTC</span>
+      <span class="hs2">ALT <span class="cy">408km LEO</span></span>
     </div>
   </div>
-
-  <!-- Right Radar -->
-  <div class="hud-panel right-panel" id="hudRight">
-    <div class="panel-title">// TACTICAL</div>
-    <div class="radar-wrap">
-      <canvas id="radarCanvas" width="160" height="160"></canvas>
-    </div>
-    <div class="hud-sub" style="margin-top:8px">TARGETS: <span class="cyan" id="targetCount">0</span></div>
+  <div class="hp ptl">
+    <div class="hl">ORBITAL AI V4.7</div>
+    <div class="hs2">SECTOR: LEO-3 / NODE: XR-9</div>
+    <div class="hs2">UPLINK: <span class="cy bk">ACTIVE ●</span></div>
+    <div class="hs2">MODE: <span class="gn">DEEP SCAN</span></div>
+    <div class="hs2">NEXUS: <span style="color:rgba(0,195,255,.4);">NEXUS-7</span></div>
+    <div class="cy bk" style="font-size:.56rem;margin-top:2px;">▌</div>
   </div>
-
-  <!-- Bottom Console -->
-  <div class="hud-panel bottom-console" id="hudBottom">
-    <div class="panel-title">// SYSTEM LOG</div>
-    <div id="consoleLog"></div>
-    <div class="console-cursor">█</div>
+  <div class="hp ptr">
+    <div class="sigs"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="hs2">SIGNAL <span class="cy">97.4%</span></div>
+    <div class="hs2">BAND <span class="gn">↑ ULTRA</span></div>
+    <div class="hs2">PING <span class="cy">11ms</span></div>
+    <div class="hs2" style="margin-top:2px;">ENC <span style="color:rgba(0,195,255,.38);">AES-4096</span></div>
   </div>
-
-</div>
-
-<!-- INTRO SCREEN -->
-<div id="introScreen">
-  <div id="introGlitch">
-    <div class="glitch-line"></div>
-    <div class="glitch-line"></div>
-    <div class="glitch-line"></div>
+  <div class="hp pl">
+    <div class="pt2">// PLANETARY DATA</div>
+    <div class="dr"><span class="dl">POPULATION</span><span class="dv cy" id="pop">8,045,311,447</span></div>
+    <div class="dr"><span class="dl">SURFACE TEMP</span><span class="dv">+14.8°C</span></div>
+    <div class="dr"><span class="dl">SEA RISE Δ</span><span class="dv wn">+3.7mm/yr</span></div>
+    <div class="dr"><span class="dl">O₂ ATMOS</span><span class="dv cy">20.95%</span></div>
+    <div class="dr"><span class="dl">CO₂ PPM</span><span class="dv wn">421.3</span></div>
+    <div class="dr"><span class="dl">FOREST LOSS</span><span class="dv wn">↓ 4.2M ha/yr</span></div>
+    <div class="dr"><span class="dl">BIODIVERSITY</span><span class="dv wn">↓ 68%</span></div>
+    <div class="dr"><span class="dl">AI SCAN</span><span class="dv" id="sp">0%</span></div>
+    <div class="sbw"><div class="sb2" id="sb"></div></div>
+    <div class="dr"><span class="dl">THREAT INDEX</span><span class="dv wn">CRITICAL ▲</span></div>
+    <canvas id="wCv" width="200" height="28"></canvas>
   </div>
-  <div id="introContent">
-    <div id="signalText">
-      <div class="sig-line" id="sig1">SIGNAL DETECTED</div>
-      <div class="sig-line sig-small" id="sig2">ORIGIN: SOL-3</div>
-    </div>
-    <div class="tap-hint">[ TAP ANYWHERE TO INITIALIZE ]</div>
+  <div class="hp pr">
+    <div class="pt2">// TACTICAL</div>
+    <div class="rw"><canvas id="rCv" width="138" height="138"></canvas></div>
+    <div class="hs2" style="margin-top:4px;text-align:center;">CONTACTS <span class="cy" id="tc">0</span></div>
+    <div style="margin-top:8px;" class="pt2">// EM SPECTRUM</div>
+    <canvas id="eCv" width="140" height="22"></canvas>
+    <div style="margin-top:6px;" class="pt2">// THREAT MAP</div>
+    <canvas id="tCv" width="140" height="48"></canvas>
+  </div>
+  <div class="hp pb">
+    <div class="pt2">// SYSTEM LOG — ASCENSION PROTOCOL v9.1</div>
+    <div id="cLog"></div>
+    <div class="cur">█</div>
   </div>
 </div>
 
-<!-- MAIN TEXT OVERLAY -->
-<div id="overlay">
-  <div id="mainText"></div>
+<!-- MOBILE BAR -->
+<div id="mobBar">
+  <div class="mbI">
+    <div class="mbR">
+      <span style="color:rgba(0,195,255,.45);font-size:.56rem;">ORBITAL AI V4.7</span>
+      <span class="cy" id="mClk" style="font-size:.56rem;">00:00:00 UTC</span>
+      <span style="color:rgba(0,195,255,.45);font-size:.56rem;">POP <span class="cy" id="mPop">8.04B</span></span>
+    </div>
+    <div class="mbR">
+      <span class="hs2" style="font-size:.54rem;">SCAN: <span class="cy" id="mSp">0%</span></span>
+      <div class="sbw" style="width:40%;margin:0;"><div class="sb2" id="mSb"></div></div>
+      <span class="wn" style="font-size:.54rem;">THREAT: CRITICAL</span>
+    </div>
+    <div class="mbL" id="mLog"></div>
+    <div class="mbCur">█</div>
+  </div>
 </div>
 
-<!-- CANVAS -->
+<!-- INTRO -->
+<div id="intro">
+  <div id="iGrid"></div>
+  <div class="gb"></div><div class="gb"></div><div class="gb"></div><div class="gb"></div>
+  <div id="iC">
+    <div id="iArt">         ·∘○◉◉◉◉◉◉◉○∘·
+      ·○◉◉◉◉◉◉◉◉◉◉◉○·
+    ·○◉◉◉◉◉◉◉◉◉◉◉◉◉◉○·
+    ∘◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉∘
+    ∘◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉◉∘
+    ·○◉◉◉◉◉◉◉◉◉◉◉◉◉◉○·
+      ·○◉◉◉◉◉◉◉◉◉◉◉○·
+         ·∘○◉◉◉◉◉◉◉○∘·</div>
+    <div class="iL1">SIGNAL DETECTED</div>
+    <div class="iL2">ORIGIN: SOL-3 / DESIGNATION: EARTH</div>
+    <div class="iL3">ASCENSION PROTOCOL — YEAR 01 INITIALIZED</div>
+    <div class="iL4">CLASS: TERRESTRIAL · HABITABLE · EVOLVING<br>KARDASHEV INDEX: 0.73 · SINGULARITY ETA: T–12YR</div>
+    <div class="tH">[ TAP ANYWHERE TO INITIALIZE ]</div>
+  </div>
+</div>
+
+<!-- TEXT OVERLAY -->
+<div id="ov"><div id="mt"></div></div>
+<div id="st"></div>
+<div id="ew">
+  <div id="ew1">YEAR 01 : THE AWAKENING</div>
+  <div id="ew2">ascension protocol — initialized</div>
+  <div id="ew3">next transmission: classified</div>
+</div>
+
 <canvas id="bg"></canvas>
 
-<!-- THREE.JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/EffectComposer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/RenderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/UnrealBloomPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
