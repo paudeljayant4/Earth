@@ -1,0 +1,508 @@
+/* ============================================
+   ASCENSION — FUTURISTIC SCI-FI CSS
+   ============================================ */
+
+:root {
+  --cyan: #00c3ff;
+  --blue: #1a8cff;
+  --glow: #66e0ff;
+  --warn: #ff3b3b;
+  --bg: #020412;
+  --panel-bg: rgba(0, 195, 255, 0.04);
+  --panel-border: rgba(0, 195, 255, 0.25);
+  --text-dim: rgba(255,255,255,0.5);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  overflow: hidden;
+  background: #000;
+  font-family: 'Share Tech Mono', monospace;
+  color: white;
+  cursor: none;
+}
+
+canvas#bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+}
+
+/* FILM GRAIN */
+#grainCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: screen;
+}
+
+/* VIGNETTE */
+#vignette {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    transparent 45%,
+    rgba(0,0,0,0.5) 75%,
+    rgba(0,0,0,0.85) 100%
+  );
+}
+
+/* LETTERBOX */
+.letterbox {
+  position: fixed;
+  width: 100%;
+  height: 7vh;
+  background: #000;
+  z-index: 50;
+  transition: height 1.2s cubic-bezier(0.77,0,0.175,1);
+}
+.top { top: 0; }
+.bottom { bottom: 0; }
+.letterbox.collapsed { height: 0; }
+
+/* SCAN SWEEP */
+#scanSweep {
+  position: fixed;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,195,255,0.03) 40%,
+    rgba(0,195,255,0.08) 50%,
+    rgba(0,195,255,0.03) 60%,
+    transparent 100%
+  );
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+}
+#scanSweep.sweeping {
+  opacity: 1;
+  animation: scanMove 2.5s ease-in-out;
+}
+@keyframes scanMove {
+  0% { left: -60%; }
+  100% { left: 110%; }
+}
+
+/* ============================================
+   INTRO SCREEN
+   ============================================ */
+#introScreen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: opacity 1.2s ease;
+}
+#introScreen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#introGlitch {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.glitch-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(0,195,255,0.3);
+  animation: glitchLine 4s infinite;
+}
+.glitch-line:nth-child(1) { animation-delay: 0s; top: 30%; }
+.glitch-line:nth-child(2) { animation-delay: 1.3s; top: 60%; }
+.glitch-line:nth-child(3) { animation-delay: 2.7s; top: 80%; }
+@keyframes glitchLine {
+  0% { transform: scaleX(0); opacity: 0; }
+  10% { transform: scaleX(1); opacity: 1; }
+  15% { transform: scaleX(0.3); opacity: 0.3; }
+  20% { transform: scaleX(1); opacity: 1; }
+  40% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+#introContent {
+  text-align: center;
+  z-index: 1;
+}
+
+.sig-line {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2rem, 8vw, 5rem);
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  color: var(--cyan);
+  text-shadow: 0 0 30px var(--cyan), 0 0 60px rgba(0,195,255,0.3);
+  animation: sigFlicker 3s ease forwards;
+}
+.sig-small {
+  font-size: clamp(0.9rem, 3vw, 1.5rem);
+  font-weight: 400;
+  letter-spacing: 0.5em;
+  color: rgba(0,195,255,0.7);
+  margin-top: 16px;
+  text-shadow: 0 0 15px var(--cyan);
+  animation: sigFlicker 3s 0.5s ease forwards;
+}
+@keyframes sigFlicker {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  8% { opacity: 0.2; }
+  10% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.tap-hint {
+  margin-top: 60px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(0.65rem, 2vw, 0.85rem);
+  letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.35);
+  animation: tapPulse 2s infinite;
+}
+@keyframes tapPulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.9; }
+}
+
+/* GRID OVERLAY on intro */
+#introScreen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,195,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,195,255,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridFade 4s ease forwards;
+}
+@keyframes gridFade {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* ============================================
+   HUD
+   ============================================ */
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+#hud.hidden { opacity: 0; }
+#hud.visible { opacity: 1; }
+
+.hud-panel {
+  position: absolute;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(4px);
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.8;
+  transform: translateY(0);
+  transition: all 0.6s cubic-bezier(0.23,1,0.32,1);
+  box-shadow: 0 0 20px rgba(0,195,255,0.05), inset 0 0 20px rgba(0,195,255,0.02);
+}
+.hud-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 20px; height: 20px;
+  border-top: 1px solid var(--cyan);
+  border-left: 1px solid var(--cyan);
+  opacity: 0.6;
+}
+.hud-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 20px; height: 20px;
+  border-bottom: 1px solid var(--cyan);
+  border-right: 1px solid var(--cyan);
+  opacity: 0.6;
+}
+
+.top-left {
+  top: 10vh;
+  left: 2vw;
+  width: clamp(200px, 22vw, 280px);
+}
+.top-right {
+  top: 10vh;
+  right: 2vw;
+  width: clamp(180px, 20vw, 260px);
+  text-align: right;
+}
+.left-panel {
+  left: 2vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(200px, 22vw, 280px);
+}
+.right-panel {
+  right: 2vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(180px, 20vw, 240px);
+}
+.bottom-console {
+  bottom: 10vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(300px, 55vw, 700px);
+  max-height: 18vh;
+  overflow: hidden;
+}
+
+/* Slide-in animations */
+#hud.visible .top-left { animation: slideInLeft 0.8s ease forwards; }
+#hud.visible .top-right { animation: slideInRight 0.8s ease forwards; }
+#hud.visible .left-panel { animation: slideInLeft 0.8s 0.2s ease forwards; }
+#hud.visible .right-panel { animation: slideInRight 0.8s 0.2s ease forwards; }
+#hud.visible .bottom-console { animation: slideInUp 0.8s 0.4s ease forwards; }
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.hud-label {
+  color: var(--cyan);
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  font-size: 0.75rem;
+}
+.hud-sub {
+  color: var(--text-dim);
+  font-size: 0.68rem;
+}
+.hud-cursor {
+  color: var(--cyan);
+  animation: cursorBlink 1.2s infinite;
+}
+@keyframes cursorBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.panel-title {
+  color: rgba(0,195,255,0.5);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 6px;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  gap: 8px;
+}
+.data-label {
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+.data-value {
+  color: white;
+  font-size: 0.68rem;
+  text-align: right;
+}
+.cyan { color: var(--cyan) !important; text-shadow: 0 0 8px var(--cyan); }
+.warn { color: var(--warn) !important; text-shadow: 0 0 8px var(--warn); animation: warnPulse 2s infinite; }
+@keyframes warnPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.blink { animation: cursorBlink 0.8s infinite; }
+
+.scan-bar-wrap {
+  width: 100%;
+  height: 2px;
+  background: rgba(0,195,255,0.15);
+  margin: 6px 0;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.scan-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  box-shadow: 0 0 6px var(--cyan);
+  transition: width 0.3s ease;
+}
+
+/* SIGNAL BARS */
+.signal-bars {
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+  align-items: flex-end;
+  height: 18px;
+  margin: 4px 0;
+}
+.signal-bars span {
+  width: 5px;
+  background: var(--cyan);
+  box-shadow: 0 0 4px var(--cyan);
+  animation: signalPulse 1.5s infinite;
+  border-radius: 1px 1px 0 0;
+}
+.signal-bars span:nth-child(1) { height: 4px; animation-delay: 0s; }
+.signal-bars span:nth-child(2) { height: 7px; animation-delay: 0.1s; }
+.signal-bars span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+.signal-bars span:nth-child(4) { height: 14px; animation-delay: 0.3s; }
+.signal-bars span:nth-child(5) { height: 18px; animation-delay: 0.4s; }
+@keyframes signalPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* RADAR */
+.radar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+#radarCanvas {
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(0,195,255,0.2);
+}
+
+/* CONSOLE */
+#consoleLog {
+  font-size: 0.68rem;
+  color: rgba(0,195,255,0.8);
+  line-height: 1.9;
+  max-height: calc(18vh - 60px);
+  overflow: hidden;
+}
+.console-cursor {
+  color: var(--cyan);
+  font-size: 0.75rem;
+  animation: cursorBlink 0.7s infinite;
+}
+
+/* ============================================
+   MAIN TEXT
+   ============================================ */
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 8;
+  pointer-events: none;
+}
+
+#mainText {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.1rem, 4vw, 2.8rem);
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: white;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  text-shadow: 0 0 20px rgba(0,195,255,0.5), 0 0 60px rgba(0,195,255,0.15);
+  max-width: 70vw;
+  line-height: 1.5;
+  padding: 0 2rem;
+}
+#mainText.cyan-text {
+  color: var(--cyan);
+  text-shadow: 0 0 30px var(--cyan), 0 0 80px rgba(0,195,255,0.3);
+}
+#mainText.big-text {
+  font-size: clamp(2rem, 7vw, 5rem);
+  letter-spacing: 0.3em;
+}
+#mainText.small-data {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(0.85rem, 2.5vw, 1.4rem);
+  letter-spacing: 0.3em;
+  color: var(--cyan);
+  line-height: 2;
+}
+
+/* GLITCH EFFECT */
+#mainText.glitch {
+  animation: textGlitch 0.5s ease;
+}
+@keyframes textGlitch {
+  0% { transform: translate(0); filter: none; }
+  20% { transform: translate(-3px, 1px); filter: hue-rotate(90deg); clip-path: inset(20% 0 40% 0); }
+  40% { transform: translate(3px, -1px); filter: hue-rotate(-90deg); }
+  60% { transform: translate(-2px, 2px); filter: none; clip-path: inset(60% 0 10% 0); }
+  80% { transform: translate(2px, -2px); clip-path: none; }
+  100% { transform: translate(0); }
+}
+
+/* CHROMATIC ABERRATION on drop */
+body.chroma-on canvas#bg {
+  filter: saturate(1.5);
+}
+
+/* END FRAME */
+#endFrame {
+  position: fixed;
+  bottom: 12vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(0.6rem, 1.5vw, 0.85rem);
+  letter-spacing: 0.5em;
+  color: rgba(0,195,255,0.5);
+  opacity: 0;
+  transition: opacity 2s ease;
+  z-index: 12;
+  text-align: center;
+}
+#endFrame.visible { opacity: 1; }
+
+/* BLOOM INTENSIFY */
+body.bloom-up canvas#bg {
+  filter: brightness(1.2) saturate(1.3);
+  transition: filter 0.3s ease;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .left-panel, .right-panel, .top-left, .top-right { display: none; }
+  .bottom-console { width: 90vw; }
+  #mainText { max-width: 90vw; }
+}
