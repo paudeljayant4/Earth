@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ASCENSION — Year 01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@100;300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- LETTERBOX -->
+<div class="letterbox top" id="topBar"></div>
+<div class="letterbox bottom" id="bottomBar"></div>
+
+<!-- SCAN LINE SWEEP -->
+<div id="scanSweep"></div>
+
+<!-- FILM GRAIN -->
+<canvas id="grainCanvas"></canvas>
+
+<!-- VIGNETTE -->
+<div id="vignette"></div>
+
+<!-- HUD OVERLAY -->
+<div id="hud" class="hidden">
+
+  <!-- Top Left: System ID -->
+  <div class="hud-panel top-left" id="hudTopLeft">
+    <div class="hud-label">ORBITAL AI V4.7</div>
+    <div class="hud-sub">LOCATION: LOW EARTH ORBIT</div>
+    <div class="hud-sub">SCAN STATUS: <span class="blink cyan">ACTIVE</span></div>
+    <div class="hud-cursor">_</div>
+  </div>
+
+  <!-- Top Right: Clock + Signal -->
+  <div class="hud-panel top-right" id="hudTopRight">
+    <div class="hud-label" id="utcClock">00:00:00 UTC</div>
+    <div class="signal-bars" id="signalBars">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="hud-sub">SIGNAL INTEGRITY: <span class="cyan" id="signalPct">94%</span></div>
+  </div>
+
+  <!-- Left Data Panel -->
+  <div class="hud-panel left-panel" id="hudLeft">
+    <div class="panel-title">// DATA FEED</div>
+    <div class="data-row">
+      <span class="data-label">POPULATION</span>
+      <span class="data-value cyan" id="popCounter">8,045,311,447</span>
+    </div>
+    <div class="data-row">
+      <span class="data-label">SURFACE TEMP</span>
+      <span class="data-value" id="tempVal">+14.8°C</span>
+    </div>
+    <div class="data-row">
+      <span class="data-label">O₂ LEVEL</span>
+      <span class="data-value cyan">20.95%</span>
+    </div>
+    <div class="data-row">
+      <span class="data-label">AI SCAN</span>
+      <span class="data-value" id="scanPct">0%</span>
+    </div>
+    <div class="scan-bar-wrap"><div class="scan-bar" id="scanBar"></div></div>
+    <div class="data-row">
+      <span class="data-label">THREAT LEVEL</span>
+      <span class="data-value warn">MODERATE</span>
+    </div>
+  </div>
+
+  <!-- Right Radar -->
+  <div class="hud-panel right-panel" id="hudRight">
+    <div class="panel-title">// TACTICAL</div>
+    <div class="radar-wrap">
+      <canvas id="radarCanvas" width="160" height="160"></canvas>
+    </div>
+    <div class="hud-sub" style="margin-top:8px">TARGETS: <span class="cyan" id="targetCount">0</span></div>
+  </div>
+
+  <!-- Bottom Console -->
+  <div class="hud-panel bottom-console" id="hudBottom">
+    <div class="panel-title">// SYSTEM LOG</div>
+    <div id="consoleLog"></div>
+    <div class="console-cursor">█</div>
+  </div>
+
+</div>
+
+<!-- INTRO SCREEN -->
+<div id="introScreen">
+  <div id="introGlitch">
+    <div class="glitch-line"></div>
+    <div class="glitch-line"></div>
+    <div class="glitch-line"></div>
+  </div>
+  <div id="introContent">
+    <div id="signalText">
+      <div class="sig-line" id="sig1">SIGNAL DETECTED</div>
+      <div class="sig-line sig-small" id="sig2">ORIGIN: SOL-3</div>
+    </div>
+    <div class="tap-hint">[ TAP ANYWHERE TO INITIALIZE ]</div>
+  </div>
+</div>
+
+<!-- MAIN TEXT OVERLAY -->
+<div id="overlay">
+  <div id="mainText"></div>
+</div>
+
+<!-- CANVAS -->
+<canvas id="bg"></canvas>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
