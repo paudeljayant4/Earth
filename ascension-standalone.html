@@ -128,9 +128,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 .pb{bottom:9vh;left:50%;transform:translateX(-50%);
   width:clamp(280px,54vw,680px);max-height:clamp(78px,15vh,155px);overflow:hidden;
   animation:sIUb .7s .3s ease both;}
-/* extra: top-center-right sub panel */
-.ptcr{top:9vh;right:1.5vw;width:clamp(140px,13vw,190px);text-align:right;
-  display:flex;flex-direction:column;gap:2px;animation:sIR .7s .05s ease both;}
 @keyframes sIL{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
 @keyframes sIR{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:none}}
 @keyframes sIU{from{opacity:0;transform:translateX(-50%) translateY(-14px)}to{opacity:1;transform:translateX(-50%)}}
@@ -425,7 +422,7 @@ const W=()=>window.innerWidth,H=()=>window.innerHeight;
 ══════════════════════════════════════════════════ */
 const scene=new THREE.Scene();
 const cam=new THREE.PerspectiveCamera(58,W()/H(),.1,3000);
-cam.position.set(0,0,isMob?9:7.8);
+cam.position.set(0,0,isMob?8.5:6.8);
 
 const ren=new THREE.WebGLRenderer({
   canvas:document.getElementById('bg'),
@@ -436,7 +433,7 @@ ren.setSize(W(),H());
 ren.setPixelRatio(Math.min(window.devicePixelRatio,isLow?1:2));
 
 // LIGHTS
-const sun=new THREE.PointLight(0xfff8f0,3.2,1000);
+const sun=new THREE.PointLight(0xfff8f0,3.8,1000);
 sun.position.set(14,6,10);scene.add(sun);
 const fill=new THREE.PointLight(0x0d2278,.55,400);
 fill.position.set(-10,-5,-8);scene.add(fill);
@@ -711,7 +708,7 @@ void main(){
   float band=sin(vNormal.y*6.+uTime*.8)*.04;
   col+=vec3(0.,band*.5,band);
   // ── Aurora borealis / australis at magnetic poles ──
-  float pole=pow(abs(vNormal.y),2.2);
+  float pole=pow(abs(vNormal.y),1.8);
   float aWave=sin(vNormal.x*9.+uTime*2.4)*.5+.5;
   float aWave2=sin(vNormal.z*7.+uTime*1.8+1.3)*.5+.5;
   vec3 aCol=mix(vec3(.45,.0,.9),vec3(.0,.85,.55),aWave*aWave2);
@@ -722,7 +719,7 @@ void main(){
 }`;
 
 const atmMat=new THREE.ShaderMaterial({
-  uniforms:{uTime:{value:0},uGlow:{value:1.0},uPulse:{value:0},uAurora:{value:0.0}},
+  uniforms:{uTime:{value:0},uGlow:{value:1.3},uPulse:{value:0},uAurora:{value:0.0}},
   vertexShader:atmVS,fragmentShader:atmFS,
   transparent:true,side:THREE.BackSide,depthWrite:false
 });
@@ -758,10 +755,10 @@ const earthMat=new THREE.MeshPhongMaterial({
   map:mkDay(),
   emissiveMap:mkNight(),
   emissive:new THREE.Color(.98,.96,1),
-  emissiveIntensity:.54,
+  emissiveIntensity:.64,
   specularMap:mkSpec(),
   specular:new THREE.Color(.18,.28,.45),
-  shininess:38,
+  shininess:55,
 });
 const earth=new THREE.Mesh(earthGeo,earthMat);
 scene.add(earth);
@@ -786,7 +783,7 @@ let clouds=null;
 if(!isLow){
   clouds=new THREE.Mesh(
     new THREE.SphereGeometry(2.052,64,64),
-    new THREE.MeshPhongMaterial({map:mkClouds(),transparent:true,opacity:.52,depthWrite:false})
+    new THREE.MeshPhongMaterial({map:mkClouds(),transparent:true,opacity:.44,depthWrite:false})
   );
   scene.add(clouds);
 }
@@ -816,11 +813,11 @@ const moonPivot=new THREE.Object3D();scene.add(moonPivot);
 const moonGeo=new THREE.SphereGeometry(.26,isLow?16:32,isLow?16:32);
 const moonMat=new THREE.MeshPhongMaterial({map:mkMoon(),shininess:3,specular:new THREE.Color(.04,.04,.05)});
 const moonMesh=new THREE.Mesh(moonGeo,moonMat);
-moonMesh.position.set(5.8,0.5,0);
+moonMesh.position.set(4.2,0.6,0);
 moonPivot.add(moonMesh);
 // Subtle moon halo glow
 const moonHalo=new THREE.Mesh(new THREE.SphereGeometry(.34,16,16),
-  new THREE.MeshBasicMaterial({color:0x9999bb,transparent:true,opacity:.06,side:THREE.BackSide}));
+  new THREE.MeshBasicMaterial({color:0xaaaacc,transparent:true,opacity:.14,side:THREE.BackSide}));
 moonMesh.add(moonHalo);
 // ─ ORBITAL RINGS ─
 function mkRing(r,tube,col,op,rx,rz,ry){
@@ -831,11 +828,11 @@ function mkRing(r,tube,col,op,rx,rz,ry){
   m.rotation.x=rx||0;m.rotation.z=rz||0;m.rotation.y=ry||0;
   return m;
 }
-const ring1=mkRing(2.88,.0028,0x00c3ff,.22,Math.PI*.26,.04,0);scene.add(ring1);
+const ring1=mkRing(2.88,.0030,0x00c3ff,.28,Math.PI*.26,.04,0);scene.add(ring1);
 const ring2=mkRing(3.38,.0025,0x1a8cff,.12,-Math.PI*.20,.26,0);scene.add(ring2);
 const ring3=mkRing(3.92,.0012,0x66e0ff,.04,Math.PI*.5,0,.05);scene.add(ring3);
 // Equatorial ring (subtle data-ring effect)
-const ring4=mkRing(2.65,.0018,0x00ff9f,.06,0,0,0);scene.add(ring4);
+const ring4=mkRing(2.65,.0020,0x00ff9f,.09,0,0,0);scene.add(ring4);
 
 // ─ SATELLITES ─
 const satGeo=new THREE.TetrahedronGeometry(.028,0);
@@ -911,7 +908,7 @@ let comp=null,bloom=null;
 if(!isLow){
   comp=new THREE.EffectComposer(ren);
   comp.addPass(new THREE.RenderPass(scene,cam));
-  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(W(),H()),.92,.46,.17);
+  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(W(),H()),1.15,.46,.15);
   comp.addPass(bloom);
 }
 
@@ -951,7 +948,7 @@ function triggerScanRing(){scanRingActive=true;scanRingAlpha=1;scanRingR=0;}
 function drawScanRing(){
   ovCtx.clearRect(0,0,ovCv.width,ovCv.height);
   if(!scanRingActive&&scanRingAlpha<=0)return;
-  if(scanRingActive){scanRingR+=2.2;if(scanRingR>Math.max(W(),H())){scanRingActive=false;scanRingAlpha=0;return;}}
+  if(scanRingActive){scanRingR+=3.2;if(scanRingR>Math.max(W(),H())){scanRingActive=false;scanRingAlpha=0;return;}}
   scanRingAlpha=Math.max(0,scanRingAlpha-.008);
   const cx=W()/2,cy=H()/2;
   ovCtx.beginPath();
@@ -1017,7 +1014,7 @@ function drawTraj(){
 }
 
 /* ── AURORA / ORBITAL HUD ── */
-let auroraKp=3.2;
+let auroraKp=4.5;
 function updAurora(){
   auroraKp+=(Math.random()-.5)*.12;auroraKp=Math.max(1,Math.min(9,auroraKp));
   const e=document.getElementById('auroraIdx');if(e)e.textContent=auroraKp.toFixed(1)+' Kp';
@@ -1056,10 +1053,12 @@ function drawRadar(){
   rCtx.beginPath();rCtx.moveTo(0,0);rCtx.lineTo(r,0);
   rCtx.strokeStyle='rgba(0,195,255,.9)';rCtx.lineWidth=1;rCtx.stroke();
   rCtx.restore();
-  // Moon blip — fixed upper-right
-  rCtx.shadowBlur=6;rCtx.shadowColor='rgba(180,180,220,.9)';
-  rCtx.beginPath();rCtx.arc(cx+r*.6,cy-r*.36,3,0,Math.PI*2);
-  rCtx.fillStyle='rgba(180,180,220,.75)';rCtx.fill();rCtx.shadowBlur=0;
+  // Moon blip — orbits in radar matching moonPivot
+  const mba=Date.now()*.00055*.016;// same speed as moonPivot.rotation.y+=.00055 per frame @~60fps
+  const mbx=cx+Math.cos(mba)*r*.68,mby=cy+Math.sin(mba)*r*.32;
+  rCtx.shadowBlur=7;rCtx.shadowColor='rgba(180,180,220,.9)';
+  rCtx.beginPath();rCtx.arc(mbx,mby,3,0,Math.PI*2);
+  rCtx.fillStyle='rgba(180,180,220,.78)';rCtx.fill();rCtx.shadowBlur=0;
   rBl=rBl.filter(b=>b.age<115);
   rBl.forEach(b=>{
     const al=Math.max(0,1-b.age/115);
@@ -1351,7 +1350,7 @@ function setAurora(v,dur=800){
   const step=()=>{const p=Math.min(1,(Date.now()-t0)/dur);
     atmMat.uniforms.uAurora.value=start+(v-start)*p;if(p<1)requestAnimationFrame(step);};step();}
 
-let tZ=isMob?9:7.8,cZ=isMob?9:7.8,shk=false,shkS=0;
+let tZ=isMob?8.5:6.8,cZ=isMob?8.5:6.8,shk=false,shkS=0;
 function shake(s,ms){shkS=s;shk=true;setTimeout(()=>shk=false,ms);}
 function setGlow(v,dur=0){
   if(dur>0){const start=atmMat.uniforms.uGlow.value;const t0=Date.now();
@@ -1459,12 +1458,14 @@ async function run(){
   setProg(9);setLbl('SCENE 09 — PHASE TRANSITION');
   await D(300);
   triggerBass();shake(isMob?.22:.3,1500);empFire();fireChroma(1400);triggerScanRing();
+  setTimeout(()=>{const e2=document.getElementById('emp');if(e2){e2.classList.remove('on');void e2.offsetWidth;e2.classList.add('on');}},650);
   const af=document.getElementById('auroraFlash');if(af){af.classList.remove('on');void af.offsetWidth;af.classList.add('on');}
   setAurora(.9,500);
   if(bloom)bloom.strength=3.0;
   setGlow(4.6,300);
   ring4.material.opacity=.25;
   glitch();setTimeout(glitch,180);setTimeout(glitch,360);setTimeout(glitch,550);
+  tZ=isMob?5.0:3.5;
   pinT('NEXT PHASE: ASCENSION',['big','c'],'INITIATION PROTOCOL — ACTIVE');
   sweep();hsc();
   await D(4500);
@@ -1542,8 +1543,8 @@ function loop(){
   // Rings
   ring1.rotation.z+=.001;ring2.rotation.z-=.0008;ring3.rotation.z+=.0004;ring3.rotation.x+=.00015;
   ring4.rotation.y+=.002;
-  ring1.material.opacity=.14+Math.sin(t*1.1)*.1;
-  ring2.material.opacity=.08+Math.sin(t*.72+1)*.055;
+  ring1.material.opacity=.20+Math.sin(t*1.1)*.12;
+  ring2.material.opacity=.10+Math.sin(t*.72+1)*.065;
   ring3.material.opacity=.03+Math.sin(t*.42+2)*.024;
 
   // Satellites
