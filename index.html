@@ -15,6 +15,36 @@
 <div class="co tl"></div><div class="co tr"></div>
 <div class="co bl"></div><div class="co br"></div>
 <div id="sw"></div><div id="hs"></div><div id="emp"></div>
+<div id="sunFlare"></div><div id="sunFlare2"></div>
+<div id="auroraFlash"></div>
+<!-- PART 2 ELEMENTS -->
+<div id="partCard">
+  <div id="pcPart">ASCENSION — YEAR 01</div>
+  <div id="pcTitle">CHAPTER II</div>
+  <div id="pcSub">THE RECKONING</div>
+</div>
+<div id="emWaves">
+  <div class="emR"></div><div class="emR"></div>
+  <div class="emR"></div><div class="emR"></div>
+</div>
+<div id="splitL"></div><div id="splitR"></div><div id="splitLine"></div>
+<div id="aiNode">AI NODES: <span id="aiCount">0</span> / PROCESSING: <span id="aiProc">0.00</span> EXAFLOPS</div>
+<div id="warmTint"></div>
+<div id="sigPulse">
+  <div class="spR"></div><div class="spR"></div>
+  <div class="spR"></div><div class="spR"></div>
+</div>
+<div id="ew2">
+  <div id="ew2a">YEAR 01 : CHAPTER II COMPLETE</div>
+  <div id="ew2b">the reckoning — processed</div>
+  <div id="ew2c">year 02 transmission : incoming</div>
+</div>
+<div id="audioViz">
+  <div class="avB" style="--h:8px"></div><div class="avB" style="--h:14px"></div>
+  <div class="avB" style="--h:20px"></div><div class="avB" style="--h:12px"></div>
+  <div class="avB" style="--h:18px"></div><div class="avB" style="--h:10px"></div>
+  <div class="avB" style="--h:16px"></div><div class="avB" style="--h:6px"></div>
+</div>
 <canvas id="gCv"></canvas>
 <canvas id="overlayCanvas"></canvas>
 <canvas id="chCv"></canvas>
@@ -31,6 +61,7 @@
       <span class="hs2">LAT <span class="cy">51.5°N</span></span>
       <span class="hl" id="clk" style="font-size:.66rem;">00:00:00 UTC</span>
       <span class="hs2">ALT <span class="cy">408km LEO</span></span>
+      <span class="hs2" style="font-size:.56rem;color:rgba(0,195,255,.28);">UPLINK <span class="cy">✓</span></span>
     </div>
   </div>
   <div class="hp ptl">
@@ -76,6 +107,30 @@
     <div id="cLog"></div>
     <div class="cur">█</div>
   </div>
+  <!-- BOTTOM LEFT: Biosphere Vitals (NEW) -->
+  <div class="hp pbl">
+    <div class="pt2">// BIOSPHERE VITALS</div>
+    <div class="dr"><span class="dl">PHYTOPLANKTON</span><span class="dv wn">↓ 42%</span></div>
+    <div class="dr"><span class="dl">ARCTIC ICE</span><span class="dv wn">↓ 13%/dec</span></div>
+    <div class="dr"><span class="dl">FRESHWATER</span><span class="dv wn">CRITICAL</span></div>
+    <div class="dr"><span class="dl">SOIL HEALTH</span><span class="dv wn">↓ 72%</span></div>
+    <div class="dr"><span class="dl">AURORA INDEX</span><span class="dv au-txt" id="auroraIdx">3.2 Kp</span></div>
+    <div class="dr"><span class="dl">MAGNETOSPHERE</span><span class="dv cy">STABLE</span></div>
+    <div class="sbw"><div class="sb2" style="width:42%;background:linear-gradient(90deg,var(--gr),var(--w));"></div></div>
+    <div style="margin-top:4px;" class="pt2">// BIO WAVEFORM</div>
+    <canvas id="bCv" width="200" height="34"></canvas>
+  </div>
+  <!-- BOTTOM RIGHT: Orbital Data (NEW) -->
+  <div class="hp pbr">
+    <div class="pt2">// ORBITAL DATA</div>
+    <div class="dr"><span class="dl">MOON DIST</span><span class="dv cy">384,400 km</span></div>
+    <div class="dr"><span class="dl">LUNAR PHASE</span><span class="dv" id="lunPhase">WAXING</span></div>
+    <div class="dr"><span class="dl">SAT COUNT</span><span class="dv cy">8 ACTIVE</span></div>
+    <div class="dr"><span class="dl">ORBITAL VEL</span><span class="dv cy">7.66 km/s</span></div>
+    <div class="dr"><span class="dl">NEXT TRANSIT</span><span class="dv" id="nextT">T-04:22:17</span></div>
+    <div style="margin-top:4px;" class="pt2">// TRAJECTORY PLOT</div>
+    <canvas id="trCv" width="140" height="40"></canvas>
+  </div>
 </div>
 
 <!-- MOBILE BAR -->
@@ -99,6 +154,7 @@
 <!-- INTRO -->
 <div id="intro">
   <div id="iGrid"></div>
+  <div id="iScan"></div>
   <div class="gb"></div><div class="gb"></div><div class="gb"></div><div class="gb"></div>
   <div id="iC">
     <div id="iArt">         ·∘○◉◉◉◉◉◉◉○∘·
