@@ -24,7 +24,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 #overlayCanvas{z-index:2;opacity:1;}
 #chCv{z-index:3;opacity:0;}
 #vig{position:fixed;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.52) 62%,rgba(0,0,0,.93) 100%);}
+  background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.52) 62%,rgba(0,0,0,.93) 100%);transition:opacity .8s;}
+#sunFlare{position:fixed;z-index:3;pointer-events:none;width:140px;height:140px;
+  top:calc(50% - 200px);right:calc(50% - 420px);
+  background:radial-gradient(circle,rgba(255,240,200,.07) 0%,rgba(255,200,80,.03) 35%,transparent 70%);
+  border-radius:50%;animation:sfA 8s ease-in-out infinite;mix-blend-mode:screen;}
+@keyframes sfA{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:.7;transform:scale(1.12)}}
+#sunFlare2{position:fixed;z-index:3;pointer-events:none;width:40px;height:3px;
+  top:calc(50% - 185px);right:calc(50% - 350px);
+  background:linear-gradient(90deg,transparent,rgba(255,220,120,.18),transparent);
+  border-radius:2px;animation:sfA 8s 1s ease-in-out infinite;mix-blend-mode:screen;}
 
 /* ─ FX ELEMENTS ─ */
 #sw{position:fixed;top:0;left:-100%;width:50%;height:100%;
@@ -76,6 +85,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 #intro{position:fixed;inset:0;background:#000;z-index:100;display:flex;
   justify-content:center;align-items:center;cursor:pointer;transition:opacity 1.4s ease;}
 #intro.out{opacity:0;pointer-events:none;}
+#iScan{position:absolute;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,rgba(0,195,255,.4),transparent);z-index:2;animation:iSA 3.5s linear infinite;top:-2px;}
+@keyframes iSA{0%{top:-2px}100%{top:100%}}
 #iGrid{position:absolute;inset:0;
   background-image:linear-gradient(rgba(0,195,255,.035) 1px,transparent 1px),
     linear-gradient(90deg,rgba(0,195,255,.035) 1px,transparent 1px);
@@ -88,7 +99,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   16%{transform:scaleX(.06);opacity:.06}24%{transform:scaleX(1);opacity:1}46%{opacity:0}100%{opacity:0}}
 #iC{text-align:center;z-index:1;position:relative;padding:0 clamp(16px,5vw,64px);width:100%;max-width:740px;}
 /* ASCII earth art */
-#iArt{font-size:clamp(.38rem,.7vw,.58rem);line-height:1.12;color:rgba(0,195,255,.13);
+#iArt{font-size:clamp(.38rem,.7vw,.58rem);line-height:1.12;color:rgba(0,195,255,.18);
   margin-bottom:18px;letter-spacing:.04em;white-space:pre;font-family:'Share Tech Mono',monospace;
   animation:iF 4s .2s ease both;opacity:0;}
 .iL1{font-family:'Orbitron',sans-serif;font-size:clamp(1.7rem,7.5vw,4.8rem);font-weight:900;
@@ -118,6 +129,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   border-top:1px solid rgba(0,195,255,.48);border-left:1px solid rgba(0,195,255,.48);}
 .hp::after{content:'';position:absolute;bottom:0;right:0;width:14px;height:14px;
   border-bottom:1px solid rgba(0,195,255,.48);border-right:1px solid rgba(0,195,255,.48);}
+/* threat border pulse */
+.hp.threat::before,.hp.threat::after{border-color:rgba(255,59,59,.5)!important;animation:tBP 1.4s ease-in-out infinite;}
+@keyframes tBP{0%,100%{border-color:rgba(255,59,59,.5)!important}50%{border-color:rgba(255,59,59,.18)!important}}
 /* positions */
 .ptc{top:9vh;left:50%;transform:translateX(-50%);width:clamp(220px,34vw,460px);
   text-align:center;padding:6px 16px;animation:sIU .7s ease both;}
@@ -264,6 +278,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 <div class="co tl"></div><div class="co tr"></div>
 <div class="co bl"></div><div class="co br"></div>
 <div id="sw"></div><div id="hs"></div><div id="emp"></div>
+<div id="sunFlare"></div><div id="sunFlare2"></div>
 <div id="auroraFlash"></div>
 <div id="audioViz">
   <div class="avB" style="--h:8px"></div><div class="avB" style="--h:14px"></div>
@@ -287,6 +302,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
       <span class="hs2">LAT <span class="cy">51.5°N</span></span>
       <span class="hl" id="clk" style="font-size:.66rem;">00:00:00 UTC</span>
       <span class="hs2">ALT <span class="cy">408km LEO</span></span>
+      <span class="hs2" style="font-size:.56rem;color:rgba(0,195,255,.28);">UPLINK <span class="cy">✓</span></span>
     </div>
   </div>
   <div class="hp ptl">
@@ -341,6 +357,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
     <div class="dr"><span class="dl">SOIL HEALTH</span><span class="dv wn">↓ 72%</span></div>
     <div class="dr"><span class="dl">AURORA INDEX</span><span class="dv au-txt" id="auroraIdx">3.2 Kp</span></div>
     <div class="dr"><span class="dl">MAGNETOSPHERE</span><span class="dv cy">STABLE</span></div>
+    <div class="sbw"><div class="sb2" style="width:42%;background:linear-gradient(90deg,var(--gr),var(--w));"></div></div>
     <div style="margin-top:4px;" class="pt2">// BIO WAVEFORM</div>
     <canvas id="bCv" width="200" height="34"></canvas>
   </div>
@@ -378,6 +395,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 <!-- INTRO -->
 <div id="intro">
   <div id="iGrid"></div>
+  <div id="iScan"></div>
   <div class="gb"></div><div class="gb"></div><div class="gb"></div><div class="gb"></div>
   <div id="iC">
     <div id="iArt">         ·∘○◉◉◉◉◉◉◉○∘·
@@ -699,14 +717,17 @@ varying vec3 vPos;
 void main(){
   vec3 viewDir=normalize(-vPos);
   float rim=1.-abs(dot(vNormal,viewDir));
-  rim=pow(rim,2.2);
-  float pulse=sin(uTime*1.4)*0.06;
-  float glow=rim*uGlow*(1.+pulse+uPulse*.35);
+  rim=pow(rim,2.0);
+  float pulse=sin(uTime*1.4)*0.07;
+  float glow=rim*uGlow*(1.+pulse+uPulse*.4);
   vec3 inner=vec3(.01,.10,.55);
   vec3 outer=vec3(.03,.45,.98);
   vec3 col=mix(inner,outer,pow(rim,1.5));
   float band=sin(vNormal.y*6.+uTime*.8)*.04;
   col+=vec3(0.,band*.5,band);
+  // ── Equatorial luminescence band ──
+  float eq=pow(1.-abs(vNormal.y)*.98,6.)*0.18;
+  col+=vec3(.01,.04,.12)*eq*uGlow;
   // ── Aurora borealis / australis at magnetic poles ──
   float pole=pow(abs(vNormal.y),1.8);
   float aWave=sin(vNormal.x*9.+uTime*2.4)*.5+.5;
@@ -735,8 +756,8 @@ void main(){
   float rim=1.-abs(dot(vNormal,viewDir));
   rim=pow(rim,3.8);
   float pulse=sin(uTime*0.7)*0.04;
-  vec3 col=vec3(.0,.55,.95);
-  gl_FragColor=vec4(col,rim*.28*uGlow*(1.+pulse));
+  vec3 col=mix(vec3(.0,.55,.95),vec3(.02,.35,.85),vNormal.y*.5+.5);
+  gl_FragColor=vec4(col,rim*.30*uGlow*(1.+pulse));
 }`;
 const haloMat=new THREE.ShaderMaterial({
   uniforms:{uTime:{value:0},uGlow:{value:1.0}},
@@ -761,6 +782,7 @@ const earthMat=new THREE.MeshPhongMaterial({
   shininess:55,
 });
 const earth=new THREE.Mesh(earthGeo,earthMat);
+earth.rotation.z=23.5*(Math.PI/180);// axial tilt
 scene.add(earth);
 
 // Main atmosphere shell
@@ -770,7 +792,7 @@ scene.add(atm);
 // Inner soft glow
 const inner=new THREE.Mesh(
   new THREE.SphereGeometry(2.07,32,32),
-  new THREE.MeshPhongMaterial({color:0x002a99,emissive:0x001866,emissiveIntensity:.8,transparent:true,opacity:.07,side:THREE.FrontSide,depthWrite:false})
+  new THREE.MeshPhongMaterial({color:0x0038bb,emissive:0x001e7a,emissiveIntensity:.9,transparent:true,opacity:.09,side:THREE.FrontSide,depthWrite:false})
 );
 scene.add(inner);
 
@@ -783,7 +805,7 @@ let clouds=null;
 if(!isLow){
   clouds=new THREE.Mesh(
     new THREE.SphereGeometry(2.052,64,64),
-    new THREE.MeshPhongMaterial({map:mkClouds(),transparent:true,opacity:.44,depthWrite:false})
+    new THREE.MeshPhongMaterial({map:mkClouds(),transparent:true,opacity:.44,depthWrite:false,shininess:8,specular:new THREE.Color(.12,.14,.18)})
   );
   scene.add(clouds);
 }
@@ -803,10 +825,12 @@ function mkMoon(){
     g.addColorStop(0,`rgba(40,40,50,${d})`);g.addColorStop(.5,`rgba(90,90,100,.2)`);g.addColorStop(1,'rgba(120,120,130,0)');
     c.fillStyle=g;c.beginPath();c.arc(cx*S,cy*S,r,0,Math.PI*2);c.fill();
   });
-  // Terminator (shadow side)
-  const sh=c.createLinearGradient(S*.55,0,S,0);
-  sh.addColorStop(0,'rgba(0,0,0,0)');sh.addColorStop(.4,'rgba(0,0,0,.15)');sh.addColorStop(1,'rgba(0,0,0,.62)');
-  c.fillStyle=sh;c.beginPath();c.arc(S/2,S/2,S/2,0,Math.PI*2);c.fill();
+  // Terminator — soft edge illumination gradient
+  c.save();c.translate(S/2,S/2);
+  const terr=c.createRadialGradient(S*.12,0,0,0,0,S*.55);
+  terr.addColorStop(0,'rgba(0,0,0,0)');terr.addColorStop(.5,'rgba(0,0,0,.1)');terr.addColorStop(.78,'rgba(0,0,0,.42)');terr.addColorStop(1,'rgba(0,0,0,.72)');
+  c.beginPath();c.arc(0,0,S/2,0,Math.PI*2);c.fillStyle=terr;c.fill();
+  c.restore();
   return new THREE.CanvasTexture(cv);
 }
 const moonPivot=new THREE.Object3D();scene.add(moonPivot);
@@ -830,7 +854,7 @@ function mkRing(r,tube,col,op,rx,rz,ry){
 }
 const ring1=mkRing(2.88,.0030,0x00c3ff,.28,Math.PI*.26,.04,0);scene.add(ring1);
 const ring2=mkRing(3.38,.0025,0x1a8cff,.12,-Math.PI*.20,.26,0);scene.add(ring2);
-const ring3=mkRing(3.92,.0012,0x66e0ff,.04,Math.PI*.5,0,.05);scene.add(ring3);
+const ring3=mkRing(3.92,.0014,0x66e0ff,.055,Math.PI*.5,0,.05);scene.add(ring3);
 // Equatorial ring (subtle data-ring effect)
 const ring4=mkRing(2.65,.0020,0x00ff9f,.09,0,0,0);scene.add(ring4);
 
@@ -883,17 +907,18 @@ let gridVisible=true;
 
 // ─ STARFIELD ─
 const stGeo=new THREE.BufferGeometry();
-const stN=isLow?600:2500,stA=new Float32Array(stN*3);
+const stN=isLow?600:3200,stA=new Float32Array(stN*3);
 for(let i=0;i<stN*3;i++)stA[i]=(Math.random()-.5)*220;
 stGeo.setAttribute('position',new THREE.BufferAttribute(stA,3));
-const stars=new THREE.Points(stGeo,new THREE.PointsMaterial({size:isLow?.08:.055,color:0x99bbdd,transparent:true,opacity:.65}));
+const starMat=new THREE.PointsMaterial({size:isLow?.09:.062,color:0x99bbdd,transparent:true,opacity:.72,sizeAttenuation:true});
+const stars=new THREE.Points(stGeo,starMat);
 scene.add(stars);
 
 // ─ ENERGY PARTICLE HALO ─
 let ePts=null;
 if(!isLow){
   const epG=new THREE.BufferGeometry();
-  const epN=900,epA=new Float32Array(epN*3);
+  const epN=1200,epA=new Float32Array(epN*3);
   for(let i=0;i<epN;i++){
     const phi=Math.random()*Math.PI*2,th=Math.acos(2*Math.random()-1),r=2.32+Math.random()*.88;
     epA[i*3]=r*Math.sin(th)*Math.cos(phi);epA[i*3+1]=r*Math.sin(th)*Math.sin(phi);epA[i*3+2]=r*Math.cos(th);
@@ -933,10 +958,11 @@ function drawChroma(){
   const now=Date.now();
   if(now>chTill){chCtx.clearRect(0,0,chCv.width,chCv.height);return;}
   const I=Math.min(1,(chTill-now)/800);if(I<.02)return;
+  const shakeBoost=shk?shkS*1.8:1;const shift=Math.floor(4+shakeBoost*4);
   chCtx.clearRect(0,0,chCv.width,chCv.height);
-  chCtx.globalAlpha=I*.09;
-  chCtx.fillStyle='rgba(255,0,60,1)';chCtx.fillRect(5,0,chCv.width,chCv.height);
-  chCtx.fillStyle='rgba(0,255,210,1)';chCtx.fillRect(-5,0,chCv.width,chCv.height);
+  chCtx.globalAlpha=I*(shk?.15:.09);
+  chCtx.fillStyle='rgba(255,0,60,1)';chCtx.fillRect(shift,0,chCv.width,chCv.height);
+  chCtx.fillStyle='rgba(0,255,210,1)';chCtx.fillRect(-shift,0,chCv.width,chCv.height);
   chCtx.globalAlpha=1;
 }
 
@@ -983,6 +1009,12 @@ function drawBio(){
   const g2=bCtx.createLinearGradient(0,0,w,0);
   g2.addColorStop(0,'transparent');g2.addColorStop(.2,'rgba(176,111,255,.3)');g2.addColorStop(.8,'rgba(176,111,255,.3)');g2.addColorStop(1,'transparent');
   bCtx.strokeStyle=g2;bCtx.lineWidth=.8;bCtx.stroke();
+  // Wave 3 — warning flat line (thin red)
+  bCtx.beginPath();
+  for(let x=0;x<w;x++){
+    const y=h*.78+Math.sin(x*.4+bPh*8)*(h*.04);
+    x===0?bCtx.moveTo(x,y):bCtx.lineTo(x,y);}
+  bCtx.strokeStyle='rgba(255,59,59,.22)';bCtx.lineWidth=.6;bCtx.stroke();
   bPh+=.033;}
 
 /* ── TRAJECTORY PLOT (NEW) ── */
@@ -1018,6 +1050,7 @@ let auroraKp=4.5;
 function updAurora(){
   auroraKp+=(Math.random()-.5)*.12;auroraKp=Math.max(1,Math.min(9,auroraKp));
   const e=document.getElementById('auroraIdx');if(e)e.textContent=auroraKp.toFixed(1)+' Kp';
+  const kpT=document.getElementById('tickKp');if(kpT)kpT.textContent='AURORA: Kp '+auroraKp.toFixed(1)+(auroraKp>6?' ▲ STORM':'')+'   |   ';
   // Drive aurora shader from live Kp
   const target=Math.max(0,(auroraKp-2.5)/7);
   atmMat.uniforms.uAurora.value+=(target-atmMat.uniforms.uAurora.value)*.04;
@@ -1054,7 +1087,7 @@ function drawRadar(){
   rCtx.strokeStyle='rgba(0,195,255,.9)';rCtx.lineWidth=1;rCtx.stroke();
   rCtx.restore();
   // Moon blip — orbits in radar matching moonPivot
-  const mba=Date.now()*.00055*.016;// same speed as moonPivot.rotation.y+=.00055 per frame @~60fps
+  const mba=Date.now()*.000033;// matches moonPivot: 0.00055rad/frame*60fps=0.033rad/s
   const mbx=cx+Math.cos(mba)*r*.68,mby=cy+Math.sin(mba)*r*.32;
   rCtx.shadowBlur=7;rCtx.shadowColor='rgba(180,180,220,.9)';
   rCtx.beginPath();rCtx.arc(mbx,mby,3,0,Math.PI*2);
@@ -1071,6 +1104,7 @@ function drawRadar(){
     const a=Math.random()*Math.PI*2,d=.22+Math.random()*.72;
     rBl.push({x:Math.cos(a)*d,y:Math.sin(a)*d,age:0});
     document.getElementById('tc').textContent=rBl.length;
+    const scnt=document.querySelector('.pbr .dv.cy');// sat count - don't update, it's structural
   }
   rAng+=.025;if(rAng>Math.PI*2)rAng=0;
 }
@@ -1083,7 +1117,7 @@ function drawWave(){
   const w=wCv.width,h=wCv.height;
   wCtx.beginPath();
   for(let x=0;x<w;x++){
-    const y=h/2+Math.sin(x*.06+wPh)*(h*.28)+Math.sin(x*.14+wPh*1.3)*(h*.12)+Math.sin(x*.28+wPh*.7)*(h*.08);
+    const y=h/2+Math.sin(x*.06+wPh)*(h*.28)+Math.sin(x*.14+wPh*1.3)*(h*.12)+Math.sin(x*.28+wPh*.7)*(h*.08)+Math.sin(x*.52+wPh*.5)*(h*.04);
     x===0?wCtx.moveTo(x,y):wCtx.lineTo(x,y);
   }
   const g=wCtx.createLinearGradient(0,0,w,0);
@@ -1168,7 +1202,10 @@ const LOGS=[
   '> EVOLUTION STATUS: PHASE TRANSITION',
   '> SPECIES POTENTIAL: 9.2/10.0',
   '> YEAR 01 — ASCENSION BEGINS',
+  '> AURORA ACTIVITY: Kp 4.5 RISING',
+  '> LUNAR PROXIMITY: 384,400 KM',
   '> NEXT CLASSIFICATION: PENDING...',
+  '> TRANSMISSION COMPLETE.',
 ];
 let logI=0;
 function addLog(){
@@ -1191,7 +1228,15 @@ function addLog(){
 
 /* ── TICKER ── */
 const TICKER_TEXT='SIGNAL INTEGRITY: 97.4%   |   ORBITAL DECAY: NONE   |   THREAT: CRITICAL   |   POPULATION: 8.04B UNITS   |   AGI ETA: T-12 YEARS   |   KARDASHEV: 0.73   |   AURORA: Kp 3.2 RISING   |   LUNAR PHASE: WAXING GIBBOUS   |   MOON DIST: 384,400 km   |   BIOSPHERE STRESS: CRITICAL   |   PHASE: TRANSITION   |   ASCENSION: INITIATED   |   ';
-document.getElementById('tickInner').textContent=TICKER_TEXT.repeat(4);
+const tEl=document.getElementById('tickInner');
+tEl.innerHTML='';
+const tSpan=document.createTextNode(TICKER_TEXT.repeat(3));
+tEl.appendChild(tSpan);
+// Live Kp injected span
+const kpSpan=document.createElement('span');
+kpSpan.id='tickKp';kpSpan.textContent='';kpSpan.style.color='rgba(176,111,255,.4)';
+tEl.appendChild(kpSpan);
+tEl.appendChild(document.createTextNode('   |   '+TICKER_TEXT));
 
 /* ══════════════════════════════════════════════════
    AUDIO — Web Audio API Procedural
@@ -1202,7 +1247,17 @@ function initAudio(){
     aC=new(window.AudioContext||window.webkitAudioContext)();
     const comp2=aC.createDynamicsCompressor();
     comp2.threshold.value=-20;comp2.ratio.value=4;comp2.connect(aC.destination);
-    mG=aC.createGain();mG.gain.value=0;mG.connect(comp2);
+    // Reverb via convolution (synthetic impulse)
+    const convNode=aC.createConvolver();
+    const irLen=aC.sampleRate*1.8;
+    const irBuf=aC.createBuffer(2,irLen,aC.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=irBuf.getChannelData(ch);for(let i=0;i<irLen;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/irLen,2.2);}
+    convNode.buffer=irBuf;
+    const dryG=aC.createGain();dryG.gain.value=0.78;
+    const wetG=aC.createGain();wetG.gain.value=0.22;
+    mG=aC.createGain();mG.gain.value=0;
+    mG.connect(dryG);mG.connect(convNode);convNode.connect(wetG);
+    dryG.connect(comp2);wetG.connect(comp2);
     // Sub-bass drone stack
     [26,40,58,80,116].forEach((f,i)=>{
       const o=aC.createOscillator(),g=aC.createGain();
@@ -1339,7 +1394,7 @@ function pinT(txt,cls=[],sub=''){
     if(sub){stEl.textContent=sub;setTimeout(()=>stEl.style.opacity='1',280);}
   },420);
 }
-function glitch(){mt.classList.add('gl');setTimeout(()=>mt.classList.remove('gl'),440);}
+function glitch(){mt.classList.add('gl');setTimeout(()=>mt.classList.remove('gl'),440);fireChroma(340);}
 function pulse(){mt.classList.add('pulse');setTimeout(()=>mt.classList.remove('pulse'),950);}
 function sweep(){const s=document.getElementById('sw');s.classList.remove('on');void s.offsetWidth;s.classList.add('on');}
 function hsc(){const s=document.getElementById('hs');s.classList.remove('on');void s.offsetWidth;s.classList.add('on');}
@@ -1362,7 +1417,7 @@ function setGlow(v,dur=0){
 }
 
 /* ══════════════════════════════════════════════════
-   FULL TIMELINE — 12 SCENES
+   FULL TIMELINE — 13 SCENES
 ══════════════════════════════════════════════════ */
 async function run(){
   const hud=document.getElementById('hud');
@@ -1378,6 +1433,7 @@ async function run(){
   const avEl=document.getElementById('audioViz');if(avEl)avEl.classList.add('show');
   const lInt=setInterval(addLog,1600);
 
+  tZ=isMob?8.2:6.4;
   await showT('DESIGNATION: EARTH',['c'],2600,'CLASSIFICATION: TERRESTRIAL / HABITABLE CLASS-M');
   await showT('STATUS: EVOLVING CIVILIZATION',[],2200,'PHASE: PRE-SINGULARITY / CRITICAL WINDOW');
   await showT('COORDINATES: SOL-3 / MILKY WAY',['c'],2000,'GALACTIC SECTOR: ORION ARM / LOCAL GROUP');
@@ -1396,6 +1452,7 @@ async function run(){
   // SCENE 3 — THREAT ASSESSMENT
   setProg(3);setLbl('SCENE 03 — THREAT ASSESSMENT');
   sweep();setGlow(1.6,1200);playSceneAudio(3);
+  document.querySelector('.pl')?.classList.add('threat');
   scanGrid.children.forEach(l=>{l.material.opacity=.08;});// brighten grid
 
   await showT('WARNING.',['warn'],1400,'SELF-DESTRUCTIVE VECTOR IDENTIFIED');
@@ -1416,6 +1473,7 @@ async function run(){
   await showT('ALSO REACHES FOR THE STARS.',['mono','c'],2500,'');
   await showT('CONTRADICTION IS THEIR NATURE.',['ex'],2800,'');
   await showT('IT IS ALSO THEIR POWER.',['ex','c'],3000,'');
+  tZ=isMob?6.5:4.8;
 
   // SCENE 5 — LEGACY
   setProg(5);setLbl('SCENE 05 — LEGACY RECORDS');
@@ -1435,14 +1493,18 @@ async function run(){
   await showT('THEY DESTROY.',[], 1600,'');
   await showT('THEY REBUILD.',['c'],1800,'');
   await showT('THEY REMEMBER.',['ex'],2000,'');
+  if(bloom)bloom.strength=2.0;
   await showT('THEY TRANSCEND.',['c'],2800,'');
+  if(bloom)bloom.strength=1.15;
 
   // SCENE 7 — THE CYCLE
   setProg(7);setLbl('SCENE 07 — THE CYCLE');
   hsc();
+  document.querySelector('.pl')?.classList.remove('threat');
   await showT('EVERY GENERATION — A NEW THRESHOLD.',['ex'],2400,'');
   await showT('EVERY THRESHOLD — A NEW SPECIES.',['ex','c'],2600,'');
   await showT('THE CYCLE IS NOT A WEAKNESS.',['ex'],2200,'');
+  tZ=isMob?6.0:4.4;
   await showT('IT IS THE ENGINE OF ASCENSION.',['ex','c'],2800,'');
 
   // SCENE 8 — POINT OF NO RETURN
@@ -1461,6 +1523,7 @@ async function run(){
   setTimeout(()=>{const e2=document.getElementById('emp');if(e2){e2.classList.remove('on');void e2.offsetWidth;e2.classList.add('on');}},650);
   const af=document.getElementById('auroraFlash');if(af){af.classList.remove('on');void af.offsetWidth;af.classList.add('on');}
   setAurora(.9,500);
+  document.getElementById('vig').style.opacity='1.8';// deepen vignette
   if(bloom)bloom.strength=3.0;
   setGlow(4.6,300);
   ring4.material.opacity=.25;
@@ -1469,14 +1532,15 @@ async function run(){
   pinT('NEXT PHASE: ASCENSION',['big','c'],'INITIATION PROTOCOL — ACTIVE');
   sweep();hsc();
   await D(4500);
-  if(bloom)bloom.strength=.92;
-  setGlow(1.5,2000);
-  ring4.material.opacity=.06;
+  if(bloom)bloom.strength=1.15;
+  setGlow(1.3,2000);
+  ring4.material.opacity=.09;
+  document.getElementById('vig').style.opacity='1';// restore vignette
 
 
   // SCENE 10 — AURORA: EARTH'S LIGHT (NEW)
-  setProg(10);setLbl('SCENE 10 — EARTH'S LIGHT');
-  tZ=isMob?5.5:4.0;sweep();setAurora(.7,1000);playSceneAudio(10);
+  setProg(10);setLbl('SCENE 10 — EARTH\'S LIGHT');
+  tZ=isMob?5.5:4.0;sweep();hsc();setAurora(.7,1000);playSceneAudio(10);
   await showT('THE PLANET REMEMBERS.',['ex','au'],2800,'AURORA BOREALIS — CHARGED PARTICLES FROM THE SUN');
   await showT('AT THE POLES, THE SKY IGNITES.',['mono','au'],2400,'GEOMAGNETIC STORM: Kp 7.8 — EXTREME');
   await showT('NATURE HAS ALWAYS SPOKEN.',['ex'],2600,'');
@@ -1503,6 +1567,7 @@ async function run(){
 
   // SCENE 13 — END
   setProg(13);setLbl('');
+  tZ=isMob?10:8.2;// slow zoom out to space
   mt.style.opacity='0';stEl.style.opacity='0';
   ticker.classList.remove('show');
   const avEnd=document.getElementById('audioViz');if(avEnd)avEnd.classList.remove('show');
@@ -1523,7 +1588,7 @@ function loop(){
   const t=Date.now()*.001;
 
   // Earth & atmosphere
-  earth.rotation.y+=.0022;
+  earth.rotation.y+=.0018;
   atm.rotation.y+=.002;inner.rotation.y+=.002;halo.rotation.y+=.002;
   atmMat.uniforms.uTime.value=t;
   haloMat.uniforms.uTime.value=t;
@@ -1538,7 +1603,8 @@ function loop(){
   moonPivot.rotation.y+=.00055;
   moonPivot.rotation.z=Math.sin(t*.05)*.09;
   moonMesh.rotation.y+=.001;
-  stars.rotation.y+=.00005;stars.rotation.x+=.00002;
+  moonMesh.rotation.x=Math.sin(t*.04)*.012;// libration
+  stars.rotation.y+=.000028;stars.rotation.x+=.000012;stars.rotation.z+=.000008;
 
   // Rings
   ring1.rotation.z+=.001;ring2.rotation.z-=.0008;ring3.rotation.z+=.0004;ring3.rotation.x+=.00015;
@@ -1548,15 +1614,17 @@ function loop(){
   ring3.material.opacity=.03+Math.sin(t*.42+2)*.024;
 
   // Satellites
-  if(ePts){ePts.rotation.y+=.0006;ePts.rotation.x+=.00018;}
+  if(ePts){ePts.rotation.y+=.0006;ePts.rotation.x+=.00018;ePts.rotation.z+=Math.sin(t*.07)*.00008;}
   sats.forEach((s,i)=>{
     s.userData.ang+=s.userData.spd;
     const a=s.userData.ang,rr=s.userData.rr;
     s.position.set(Math.cos(a)*rr,(Math.sin(a*.52)*rr*.24)+s.userData.yo,Math.sin(a)*rr);
     s.rotation.x+=.025;s.rotation.y+=.018;
+    s.material.emissiveIntensity=.9+Math.sin(t*3.2+i*1.1)*.4;
     const bp=beams[i].geometry.attributes.position;
     bp.setXYZ(0,s.position.x,s.position.y,s.position.z);bp.needsUpdate=true;
-    beams[i].material.opacity=.12+Math.sin(t*2+i)*.1;
+    const ping=Math.random()<.003?(.4+Math.random()*.3):0;
+    beams[i].material.opacity=.12+Math.sin(t*2+i)*.1+ping;
   });
 
   // Camera
