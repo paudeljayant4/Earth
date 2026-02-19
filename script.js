@@ -8,7 +8,7 @@ const W=()=>window.innerWidth,H=()=>window.innerHeight;
 ══════════════════════════════════════════════════ */
 const scene=new THREE.Scene();
 const cam=new THREE.PerspectiveCamera(58,W()/H(),.1,3000);
-cam.position.set(0,0,isMob?9:7.8);
+cam.position.set(0,0,isMob?8.5:6.8);
 
 const ren=new THREE.WebGLRenderer({
   canvas:document.getElementById('bg'),
@@ -19,7 +19,7 @@ ren.setSize(W(),H());
 ren.setPixelRatio(Math.min(window.devicePixelRatio,isLow?1:2));
 
 // LIGHTS
-const sun=new THREE.PointLight(0xfff8f0,3.2,1000);
+const sun=new THREE.PointLight(0xfff8f0,3.8,1000);
 sun.position.set(14,6,10);scene.add(sun);
 const fill=new THREE.PointLight(0x0d2278,.55,400);
 fill.position.set(-10,-5,-8);scene.add(fill);
@@ -279,27 +279,36 @@ const atmFS=`
 uniform float uTime;
 uniform float uGlow;
 uniform float uPulse;
+uniform float uAurora;
 varying vec3 vNormal;
 varying vec3 vPos;
 void main(){
   vec3 viewDir=normalize(-vPos);
   float rim=1.-abs(dot(vNormal,viewDir));
-  rim=pow(rim,2.2);
-  // Animated pulse ring
-  float pulse=sin(uTime*1.4)*0.06;
-  float glow=rim*uGlow*(1.+pulse+uPulse*.35);
-  // Color gradient: deep blue → cyan
+  rim=pow(rim,2.0);
+  float pulse=sin(uTime*1.4)*0.07;
+  float glow=rim*uGlow*(1.+pulse+uPulse*.4);
   vec3 inner=vec3(.01,.10,.55);
   vec3 outer=vec3(.03,.45,.98);
   vec3 col=mix(inner,outer,pow(rim,1.5));
-  // Subtle shimmer band
   float band=sin(vNormal.y*6.+uTime*.8)*.04;
   col+=vec3(0.,band*.5,band);
-  gl_FragColor=vec4(col*glow,rim*.42*uGlow);
+  // ── Equatorial luminescence band ──
+  float eq=pow(1.-abs(vNormal.y)*.98,6.)*0.18;
+  col+=vec3(.01,.04,.12)*eq*uGlow;
+  // ── Aurora borealis / australis at magnetic poles ──
+  float pole=pow(abs(vNormal.y),1.8);
+  float aWave=sin(vNormal.x*9.+uTime*2.4)*.5+.5;
+  float aWave2=sin(vNormal.z*7.+uTime*1.8+1.3)*.5+.5;
+  vec3 aCol=mix(vec3(.45,.0,.9),vec3(.0,.85,.55),aWave*aWave2);
+  float aStr=pole*uAurora*rim*(0.9+sin(uTime*1.1+vNormal.x*4.)*.1);
+  col=mix(col,aCol,aStr*.7);
+  float aAlpha=rim*.42*uGlow + aStr*.3;
+  gl_FragColor=vec4(col*glow + aCol*aStr*.18, aAlpha);
 }`;
 
 const atmMat=new THREE.ShaderMaterial({
-  uniforms:{uTime:{value:0},uGlow:{value:1.0},uPulse:{value:0}},
+  uniforms:{uTime:{value:0},uGlow:{value:1.3},uPulse:{value:0},uAurora:{value:0.0}},
   vertexShader:atmVS,fragmentShader:atmFS,
   transparent:true,side:THREE.BackSide,depthWrite:false
 });
@@ -315,8 +324,8 @@ void main(){
   float rim=1.-abs(dot(vNormal,viewDir));
   rim=pow(rim,3.8);
   float pulse=sin(uTime*0.7)*0.04;
-  vec3 col=vec3(.0,.55,.95);
-  gl_FragColor=vec4(col,rim*.28*uGlow*(1.+pulse));
+  vec3 col=mix(vec3(.0,.55,.95),vec3(.02,.35,.85),vNormal.y*.5+.5);
+  gl_FragColor=vec4(col,rim*.30*uGlow*(1.+pulse));
 }`;
 const haloMat=new THREE.ShaderMaterial({
   uniforms:{uTime:{value:0},uGlow:{value:1.0}},
@@ -335,12 +344,13 @@ const earthMat=new THREE.MeshPhongMaterial({
   map:mkDay(),
   emissiveMap:mkNight(),
   emissive:new THREE.Color(.98,.96,1),
-  emissiveIntensity:.54,
+  emissiveIntensity:.64,
   specularMap:mkSpec(),
   specular:new THREE.Color(.18,.28,.45),
-  shininess:38,
+  shininess:55,
 });
 const earth=new THREE.Mesh(earthGeo,earthMat);
+earth.rotation.z=23.5*(Math.PI/180);// axial tilt
 scene.add(earth);
 
 // Main atmosphere shell
@@ -350,7 +360,7 @@ scene.add(atm);
 // Inner soft glow
 const inner=new THREE.Mesh(
   new THREE.SphereGeometry(2.07,32,32),
-  new THREE.MeshPhongMaterial({color:0x002a99,emissive:0x001866,emissiveIntensity:.8,transparent:true,opacity:.07,side:THREE.FrontSide,depthWrite:false})
+  new THREE.MeshPhongMaterial({color:0x0038bb,emissive:0x001e7a,emissiveIntensity:.9,transparent:true,opacity:.09,side:THREE.FrontSide,depthWrite:false})
 );
 scene.add(inner);
 
@@ -363,11 +373,44 @@ let clouds=null;
 if(!isLow){
   clouds=new THREE.Mesh(
     new THREE.SphereGeometry(2.052,64,64),
-    new THREE.MeshPhongMaterial({map:mkClouds(),transparent:true,opacity:.52,depthWrite:false})
+    new THREE.MeshPhongMaterial({map:mkClouds(),transparent:true,opacity:.44,depthWrite:false,shininess:8,specular:new THREE.Color(.12,.14,.18)})
   );
   scene.add(clouds);
 }
 
+
+// ─ MOON — orbiting body ─
+function mkMoon(){
+  const S=isLow?64:128;
+  const cv=document.createElement('canvas');cv.width=S;cv.height=S;
+  const c=cv.getContext('2d');
+  const bg=c.createRadialGradient(S*.42,S*.4,0,S*.5,S*.5,S*.5);
+  bg.addColorStop(0,'#c4c4cc');bg.addColorStop(.65,'#888898');bg.addColorStop(1,'#2e2e3a');
+  c.fillStyle=bg;c.beginPath();c.arc(S/2,S/2,S/2,0,Math.PI*2);c.fill();
+  // Craters
+  [[.4,.35,14,.65],[.62,.55,8,.55],[.3,.58,6,.5],[.7,.4,5,.45],[.5,.65,9,.6],[.55,.3,6,.48],[.35,.48,5,.4],[.68,.68,4,.38]].forEach(([cx,cy,r,d])=>{
+    const g=c.createRadialGradient(cx*S,cy*S,0,cx*S,cy*S,r);
+    g.addColorStop(0,`rgba(40,40,50,${d})`);g.addColorStop(.5,`rgba(90,90,100,.2)`);g.addColorStop(1,'rgba(120,120,130,0)');
+    c.fillStyle=g;c.beginPath();c.arc(cx*S,cy*S,r,0,Math.PI*2);c.fill();
+  });
+  // Terminator — soft edge illumination gradient
+  c.save();c.translate(S/2,S/2);
+  const terr=c.createRadialGradient(S*.12,0,0,0,0,S*.55);
+  terr.addColorStop(0,'rgba(0,0,0,0)');terr.addColorStop(.5,'rgba(0,0,0,.1)');terr.addColorStop(.78,'rgba(0,0,0,.42)');terr.addColorStop(1,'rgba(0,0,0,.72)');
+  c.beginPath();c.arc(0,0,S/2,0,Math.PI*2);c.fillStyle=terr;c.fill();
+  c.restore();
+  return new THREE.CanvasTexture(cv);
+}
+const moonPivot=new THREE.Object3D();scene.add(moonPivot);
+const moonGeo=new THREE.SphereGeometry(.26,isLow?16:32,isLow?16:32);
+const moonMat=new THREE.MeshPhongMaterial({map:mkMoon(),shininess:3,specular:new THREE.Color(.04,.04,.05)});
+const moonMesh=new THREE.Mesh(moonGeo,moonMat);
+moonMesh.position.set(4.2,0.6,0);
+moonPivot.add(moonMesh);
+// Subtle moon halo glow
+const moonHalo=new THREE.Mesh(new THREE.SphereGeometry(.34,16,16),
+  new THREE.MeshBasicMaterial({color:0xaaaacc,transparent:true,opacity:.14,side:THREE.BackSide}));
+moonMesh.add(moonHalo);
 // ─ ORBITAL RINGS ─
 function mkRing(r,tube,col,op,rx,rz,ry){
   const m=new THREE.Mesh(
@@ -377,11 +420,11 @@ function mkRing(r,tube,col,op,rx,rz,ry){
   m.rotation.x=rx||0;m.rotation.z=rz||0;m.rotation.y=ry||0;
   return m;
 }
-const ring1=mkRing(2.88,.0028,0x00c3ff,.22,Math.PI*.26,.04,0);scene.add(ring1);
+const ring1=mkRing(2.88,.0030,0x00c3ff,.28,Math.PI*.26,.04,0);scene.add(ring1);
 const ring2=mkRing(3.38,.0025,0x1a8cff,.12,-Math.PI*.20,.26,0);scene.add(ring2);
-const ring3=mkRing(3.92,.0012,0x66e0ff,.04,Math.PI*.5,0,.05);scene.add(ring3);
+const ring3=mkRing(3.92,.0014,0x66e0ff,.055,Math.PI*.5,0,.05);scene.add(ring3);
 // Equatorial ring (subtle data-ring effect)
-const ring4=mkRing(2.65,.0018,0x00ff9f,.06,0,0,0);scene.add(ring4);
+const ring4=mkRing(2.65,.0020,0x00ff9f,.09,0,0,0);scene.add(ring4);
 
 // ─ SATELLITES ─
 const satGeo=new THREE.TetrahedronGeometry(.028,0);
@@ -432,17 +475,18 @@ let gridVisible=true;
 
 // ─ STARFIELD ─
 const stGeo=new THREE.BufferGeometry();
-const stN=isLow?600:2500,stA=new Float32Array(stN*3);
+const stN=isLow?600:3200,stA=new Float32Array(stN*3);
 for(let i=0;i<stN*3;i++)stA[i]=(Math.random()-.5)*220;
 stGeo.setAttribute('position',new THREE.BufferAttribute(stA,3));
-const stars=new THREE.Points(stGeo,new THREE.PointsMaterial({size:isLow?.08:.055,color:0x99bbdd,transparent:true,opacity:.65}));
+const starMat=new THREE.PointsMaterial({size:isLow?.09:.062,color:0x99bbdd,transparent:true,opacity:.72,sizeAttenuation:true});
+const stars=new THREE.Points(stGeo,starMat);
 scene.add(stars);
 
 // ─ ENERGY PARTICLE HALO ─
 let ePts=null;
 if(!isLow){
   const epG=new THREE.BufferGeometry();
-  const epN=900,epA=new Float32Array(epN*3);
+  const epN=1200,epA=new Float32Array(epN*3);
   for(let i=0;i<epN;i++){
     const phi=Math.random()*Math.PI*2,th=Math.acos(2*Math.random()-1),r=2.32+Math.random()*.88;
     epA[i*3]=r*Math.sin(th)*Math.cos(phi);epA[i*3+1]=r*Math.sin(th)*Math.sin(phi);epA[i*3+2]=r*Math.cos(th);
@@ -457,7 +501,7 @@ let comp=null,bloom=null;
 if(!isLow){
   comp=new THREE.EffectComposer(ren);
   comp.addPass(new THREE.RenderPass(scene,cam));
-  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(W(),H()),.92,.46,.17);
+  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(W(),H()),1.15,.46,.15);
   comp.addPass(bloom);
 }
 
@@ -482,10 +526,11 @@ function drawChroma(){
   const now=Date.now();
   if(now>chTill){chCtx.clearRect(0,0,chCv.width,chCv.height);return;}
   const I=Math.min(1,(chTill-now)/800);if(I<.02)return;
+  const shakeBoost=shk?shkS*1.8:1;const shift=Math.floor(4+shakeBoost*4);
   chCtx.clearRect(0,0,chCv.width,chCv.height);
-  chCtx.globalAlpha=I*.09;
-  chCtx.fillStyle='rgba(255,0,60,1)';chCtx.fillRect(5,0,chCv.width,chCv.height);
-  chCtx.fillStyle='rgba(0,255,210,1)';chCtx.fillRect(-5,0,chCv.width,chCv.height);
+  chCtx.globalAlpha=I*(shk?.15:.09);
+  chCtx.fillStyle='rgba(255,0,60,1)';chCtx.fillRect(shift,0,chCv.width,chCv.height);
+  chCtx.fillStyle='rgba(0,255,210,1)';chCtx.fillRect(-shift,0,chCv.width,chCv.height);
   chCtx.globalAlpha=1;
 }
 
@@ -497,7 +542,7 @@ function triggerScanRing(){scanRingActive=true;scanRingAlpha=1;scanRingR=0;}
 function drawScanRing(){
   ovCtx.clearRect(0,0,ovCv.width,ovCv.height);
   if(!scanRingActive&&scanRingAlpha<=0)return;
-  if(scanRingActive){scanRingR+=2.2;if(scanRingR>Math.max(W(),H())){scanRingActive=false;scanRingAlpha=0;return;}}
+  if(scanRingActive){scanRingR+=3.2;if(scanRingR>Math.max(W(),H())){scanRingActive=false;scanRingAlpha=0;return;}}
   scanRingAlpha=Math.max(0,scanRingAlpha-.008);
   const cx=W()/2,cy=H()/2;
   ovCtx.beginPath();
@@ -510,6 +555,86 @@ function drawScanRing(){
   ovCtx.lineWidth=1;ovCtx.stroke();
 }
 
+
+/* ── BIOSPHERE WAVEFORM (NEW) ── */
+const bCv=document.getElementById('bCv'),bCtx=bCv.getContext('2d');let bPh=0;
+function drawBio(){
+  const cv=bCv;if(!cv)return;
+  bCtx.clearRect(0,0,cv.width,cv.height);const w=cv.width,h=cv.height;
+  // Wave 1 — green "life signal"
+  bCtx.beginPath();
+  for(let x=0;x<w;x++){
+    const y=h/2+Math.sin(x*.07+bPh)*(h*.32*(0.7+Math.sin(x*.018+bPh*.4)*.3));
+    x===0?bCtx.moveTo(x,y):bCtx.lineTo(x,y);}
+  const g1=bCtx.createLinearGradient(0,0,w,0);
+  g1.addColorStop(0,'transparent');g1.addColorStop(.2,'rgba(0,255,120,.38)');g1.addColorStop(.8,'rgba(0,255,120,.38)');g1.addColorStop(1,'transparent');
+  bCtx.strokeStyle=g1;bCtx.lineWidth=1;bCtx.stroke();
+  // Wave 2 — purple aurora signal
+  bCtx.beginPath();
+  for(let x=0;x<w;x++){
+    const y=h/2+Math.sin(x*.09+bPh*1.3+Math.PI*.55)*(h*.22*(0.6+Math.sin(x*.023+bPh*.2)*.4));
+    x===0?bCtx.moveTo(x,y):bCtx.lineTo(x,y);}
+  const g2=bCtx.createLinearGradient(0,0,w,0);
+  g2.addColorStop(0,'transparent');g2.addColorStop(.2,'rgba(176,111,255,.3)');g2.addColorStop(.8,'rgba(176,111,255,.3)');g2.addColorStop(1,'transparent');
+  bCtx.strokeStyle=g2;bCtx.lineWidth=.8;bCtx.stroke();
+  // Wave 3 — warning flat line (thin red)
+  bCtx.beginPath();
+  for(let x=0;x<w;x++){
+    const y=h*.78+Math.sin(x*.4+bPh*8)*(h*.04);
+    x===0?bCtx.moveTo(x,y):bCtx.lineTo(x,y);}
+  bCtx.strokeStyle='rgba(255,59,59,.22)';bCtx.lineWidth=.6;bCtx.stroke();
+  bPh+=.033;}
+
+/* ── TRAJECTORY PLOT (NEW) ── */
+const trCv=document.getElementById('trCv'),trCtx=trCv.getContext('2d');
+function drawTraj(){
+  const cv=trCv;if(!cv)return;
+  const w=cv.width,h=cv.height,t=Date.now()*.001;
+  trCtx.clearRect(0,0,w,h);trCtx.fillStyle='rgba(0,5,15,.55)';trCtx.fillRect(0,0,w,h);
+  // Earth dot
+  const ex=w*.34,ey=h*.5;
+  trCtx.shadowBlur=8;trCtx.shadowColor='rgba(0,195,255,.7)';
+  trCtx.beginPath();trCtx.arc(ex,ey,5,0,Math.PI*2);
+  const eg=trCtx.createRadialGradient(ex,ey,0,ex,ey,5);
+  eg.addColorStop(0,'rgba(0,195,255,.9)');eg.addColorStop(1,'rgba(0,80,200,.3)');
+  trCtx.fillStyle=eg;trCtx.fill();trCtx.shadowBlur=0;
+  // Moon orbit ellipse
+  const mr=w*.32,mry=h*.36;
+  trCtx.beginPath();trCtx.setLineDash([2,3]);
+  trCtx.ellipse(ex,ey,mr,mry,0,0,Math.PI*2);
+  trCtx.strokeStyle='rgba(180,180,220,.15)';trCtx.lineWidth=.7;trCtx.stroke();trCtx.setLineDash([]);
+  // Moon dot
+  const ma=t*.055;const mx=ex+Math.cos(ma)*mr,my=ey+Math.sin(ma)*mry;
+  trCtx.beginPath();trCtx.arc(mx,my,2.5,0,Math.PI*2);trCtx.fillStyle='rgba(190,190,215,.85)';trCtx.fill();
+  // Sat constellation
+  for(let i=0;i<8;i++){
+    const sa=t*(0.08+i*.006)+i*Math.PI*.25;const sr=w*.13+i*1.2;
+    const sx=ex+Math.cos(sa)*sr,sy=ey+Math.sin(sa)*sr*.45;
+    trCtx.beginPath();trCtx.arc(sx,sy,1,0,Math.PI*2);trCtx.fillStyle='rgba(0,195,255,.48)';trCtx.fill();}
+}
+
+/* ── AURORA / ORBITAL HUD ── */
+let auroraKp=4.5;
+function updAurora(){
+  auroraKp+=(Math.random()-.5)*.12;auroraKp=Math.max(1,Math.min(9,auroraKp));
+  const e=document.getElementById('auroraIdx');if(e)e.textContent=auroraKp.toFixed(1)+' Kp';
+  const kpT=document.getElementById('tickKp');if(kpT)kpT.textContent='AURORA: Kp '+auroraKp.toFixed(1)+(auroraKp>6?' ▲ STORM':'')+'   |   ';
+  // Drive aurora shader from live Kp
+  const target=Math.max(0,(auroraKp-2.5)/7);
+  atmMat.uniforms.uAurora.value+=(target-atmMat.uniforms.uAurora.value)*.04;
+}
+let transitBase=Date.now();
+function updTransit(){
+  const elapsed=Date.now()-transitBase;
+  const period=15973000;// ms
+  const rem=Math.max(0,period-(elapsed%period));
+  const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+  const pad=v=>String(v).padStart(2,'0');
+  const e=document.getElementById('nextT');if(e)e.textContent=`T-${pad(h)}:${pad(m)}:${pad(s)}`;
+  const lp=document.getElementById('lunPhase');
+  if(lp){const phases=['NEW MOON','WAXING CRESCENT','FIRST QUARTER','WAXING GIBBOUS','FULL MOON','WANING GIBBOUS','LAST QUARTER','WANING CRESCENT'];
+    lp.textContent=phases[Math.floor((elapsed/period)*8)%8];}
+}
 /* ── RADAR ── */
 const rCv=document.getElementById('rCv'),rCtx=rCv.getContext('2d');
 let rAng=0,rBl=[];
@@ -529,6 +654,12 @@ function drawRadar(){
   rCtx.beginPath();rCtx.moveTo(0,0);rCtx.lineTo(r,0);
   rCtx.strokeStyle='rgba(0,195,255,.9)';rCtx.lineWidth=1;rCtx.stroke();
   rCtx.restore();
+  // Moon blip — orbits in radar matching moonPivot
+  const mba=Date.now()*.000033;// matches moonPivot: 0.00055rad/frame*60fps=0.033rad/s
+  const mbx=cx+Math.cos(mba)*r*.68,mby=cy+Math.sin(mba)*r*.32;
+  rCtx.shadowBlur=7;rCtx.shadowColor='rgba(180,180,220,.9)';
+  rCtx.beginPath();rCtx.arc(mbx,mby,3,0,Math.PI*2);
+  rCtx.fillStyle='rgba(180,180,220,.78)';rCtx.fill();rCtx.shadowBlur=0;
   rBl=rBl.filter(b=>b.age<115);
   rBl.forEach(b=>{
     const al=Math.max(0,1-b.age/115);
@@ -541,6 +672,7 @@ function drawRadar(){
     const a=Math.random()*Math.PI*2,d=.22+Math.random()*.72;
     rBl.push({x:Math.cos(a)*d,y:Math.sin(a)*d,age:0});
     document.getElementById('tc').textContent=rBl.length;
+    const scnt=document.querySelector('.pbr .dv.cy');// sat count - don't update, it's structural
   }
   rAng+=.025;if(rAng>Math.PI*2)rAng=0;
 }
@@ -553,7 +685,7 @@ function drawWave(){
   const w=wCv.width,h=wCv.height;
   wCtx.beginPath();
   for(let x=0;x<w;x++){
-    const y=h/2+Math.sin(x*.06+wPh)*(h*.28)+Math.sin(x*.14+wPh*1.3)*(h*.12)+Math.sin(x*.28+wPh*.7)*(h*.08);
+    const y=h/2+Math.sin(x*.06+wPh)*(h*.28)+Math.sin(x*.14+wPh*1.3)*(h*.12)+Math.sin(x*.28+wPh*.7)*(h*.08)+Math.sin(x*.52+wPh*.5)*(h*.04);
     x===0?wCtx.moveTo(x,y):wCtx.lineTo(x,y);
   }
   const g=wCtx.createLinearGradient(0,0,w,0);
@@ -638,7 +770,10 @@ const LOGS=[
   '> EVOLUTION STATUS: PHASE TRANSITION',
   '> SPECIES POTENTIAL: 9.2/10.0',
   '> YEAR 01 — ASCENSION BEGINS',
+  '> AURORA ACTIVITY: Kp 4.5 RISING',
+  '> LUNAR PROXIMITY: 384,400 KM',
   '> NEXT CLASSIFICATION: PENDING...',
+  '> TRANSMISSION COMPLETE.',
 ];
 let logI=0;
 function addLog(){
@@ -660,8 +795,16 @@ function addLog(){
 }
 
 /* ── TICKER ── */
-const TICKER_TEXT='SIGNAL INTEGRITY: 97.4%   |   ORBITAL DECAY: NONE   |   THREAT: CRITICAL   |   POPULATION: 8.04B UNITS   |   AGI ETA: T-12 YEARS   |   KARDASHEV: 0.73   |   PHASE: TRANSITION   |   ASCENSION: INITIATED   |   ';
-document.getElementById('tickInner').textContent=TICKER_TEXT.repeat(4);
+const TICKER_TEXT='SIGNAL INTEGRITY: 97.4%   |   ORBITAL DECAY: NONE   |   THREAT: CRITICAL   |   POPULATION: 8.04B UNITS   |   AGI ETA: T-12 YEARS   |   KARDASHEV: 0.73   |   AURORA: Kp 3.2 RISING   |   LUNAR PHASE: WAXING GIBBOUS   |   MOON DIST: 384,400 km   |   BIOSPHERE STRESS: CRITICAL   |   PHASE: TRANSITION   |   ASCENSION: INITIATED   |   ';
+const tEl=document.getElementById('tickInner');
+tEl.innerHTML='';
+const tSpan=document.createTextNode(TICKER_TEXT.repeat(3));
+tEl.appendChild(tSpan);
+// Live Kp injected span
+const kpSpan=document.createElement('span');
+kpSpan.id='tickKp';kpSpan.textContent='';kpSpan.style.color='rgba(176,111,255,.4)';
+tEl.appendChild(kpSpan);
+tEl.appendChild(document.createTextNode('   |   '+TICKER_TEXT));
 
 /* ══════════════════════════════════════════════════
    AUDIO — Web Audio API Procedural
@@ -672,7 +815,17 @@ function initAudio(){
     aC=new(window.AudioContext||window.webkitAudioContext)();
     const comp2=aC.createDynamicsCompressor();
     comp2.threshold.value=-20;comp2.ratio.value=4;comp2.connect(aC.destination);
-    mG=aC.createGain();mG.gain.value=0;mG.connect(comp2);
+    // Reverb via convolution (synthetic impulse)
+    const convNode=aC.createConvolver();
+    const irLen=aC.sampleRate*1.8;
+    const irBuf=aC.createBuffer(2,irLen,aC.sampleRate);
+    for(let ch=0;ch<2;ch++){const d=irBuf.getChannelData(ch);for(let i=0;i<irLen;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/irLen,2.2);}
+    convNode.buffer=irBuf;
+    const dryG=aC.createGain();dryG.gain.value=0.78;
+    const wetG=aC.createGain();wetG.gain.value=0.22;
+    mG=aC.createGain();mG.gain.value=0;
+    mG.connect(dryG);mG.connect(convNode);convNode.connect(wetG);
+    dryG.connect(comp2);wetG.connect(comp2);
     // Sub-bass drone stack
     [26,40,58,80,116].forEach((f,i)=>{
       const o=aC.createOscillator(),g=aC.createGain();
@@ -719,6 +872,10 @@ function triggerBass(){
     rv.type='sine';rv.frequency.value=45+Math.random()*25;
     re.gain.setValueAtTime(.5,aC.currentTime+.06);re.gain.linearRampToValueAtTime(0,aC.currentTime+4);
     rv.connect(re).connect(mG);rv.start(aC.currentTime+.06);rv.stop(aC.currentTime+4);
+    // Ascending chime cascade on ASCENSION
+    [523,659,784,988,1047].forEach((f,i)=>{const oc=aC.createOscillator(),gc=aC.createGain();oc.type='triangle';oc.frequency.value=f;
+      gc.gain.setValueAtTime(0,aC.currentTime+i*.16);gc.gain.linearRampToValueAtTime(.055,aC.currentTime+i*.16+.08);
+      gc.gain.exponentialRampToValueAtTime(.001,aC.currentTime+i*.16+.9);oc.connect(gc).connect(mG);oc.start(aC.currentTime+i*.16);oc.stop(aC.currentTime+i*.16+.9);});
   }catch(e){}
 }
 function buildUp(){
@@ -742,6 +899,122 @@ function arpStep(s){
 }
 function fadOut(){if(!aC||!mG)return;try{mG.gain.linearRampToValueAtTime(0,aC.currentTime+7);}catch(e){}}
 
+
+/* ── SCENE-SYNCED AUDIO CUES ── */
+function playSceneAudio(sceneNum){
+  if(!aC||!mG)return;
+  try{
+    if(sceneNum===3){// Threat: low dissonant pad
+      const o=aC.createOscillator(),g=aC.createGain();o.type='sawtooth';o.frequency.value=36;
+      g.gain.setValueAtTime(0,aC.currentTime);g.gain.linearRampToValueAtTime(.09,aC.currentTime+1.8);
+      g.gain.linearRampToValueAtTime(.04,aC.currentTime+9);o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+12);}
+    if(sceneNum===5){// Legacy: gentle luminous harmonics
+      [880,1100,1320].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='sine';o.frequency.value=f;
+        g.gain.setValueAtTime(0,aC.currentTime);g.gain.linearRampToValueAtTime(.015,aC.currentTime+2+i);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+8+i);o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+9+i);});}
+    if(sceneNum===8){// Precipice: tension swell
+      const o=aC.createOscillator(),g=aC.createGain();o.type='sine';o.frequency.value=55;
+      g.gain.setValueAtTime(0,aC.currentTime);g.gain.linearRampToValueAtTime(.2,aC.currentTime+2.5);
+      g.gain.linearRampToValueAtTime(.14,aC.currentTime+7);o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+10);}
+    if(sceneNum===10){// Aurora scene: shimmering high vibrato tones
+      [1760,2200,2640,3300].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='triangle';o.frequency.value=f;
+        const lf=aC.createOscillator(),lg2=aC.createGain();lf.frequency.value=.28+i*.09;lg2.gain.value=f*.018;
+        lf.connect(lg2);lg2.connect(o.frequency);lf.start();
+        g.gain.setValueAtTime(0,aC.currentTime);g.gain.linearRampToValueAtTime(.011,aC.currentTime+1.5+i*.5);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+5+i);o.connect(g).connect(mG);o.start();
+        o.stop(aC.currentTime+6+i);lf.stop(aC.currentTime+6+i);});}
+  }catch(e){}}
+
+/* ── PART 2 AUDIO CUES ── */
+function playP2Audio(sceneNum){
+  if(!aC||!mG)return;
+  try{
+    if(sceneNum===15){// AGI emergence — rapid ascending arp
+      const ns2=[261,329,392,523,659,784,1046,1318,1568,2093];
+      ns2.forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(0,aC.currentTime+i*.09);g.gain.linearRampToValueAtTime(.028,aC.currentTime+i*.09+.06);
+        g.gain.exponentialRampToValueAtTime(.001,aC.currentTime+i*.09+.55);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.09);o.stop(aC.currentTime+i*.09+.55);});}
+
+    if(sceneNum===16){// Singularity overdrive — stacked harmonics + white noise burst
+      [55,110,220,440,880].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type=i<3?'sawtooth':'square';
+        o.frequency.setValueAtTime(f,aC.currentTime);o.frequency.linearRampToValueAtTime(f*2.1,aC.currentTime+3.5);
+        g.gain.setValueAtTime(.04,aC.currentTime);g.gain.linearRampToValueAtTime(.0,aC.currentTime+6);
+        o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+6);});
+      // Noise burst
+      const nb=aC.createOscillator(),ng=aC.createGain();nb.type='sawtooth';nb.frequency.value=880;
+      ng.gain.setValueAtTime(.22,aC.currentTime);ng.gain.exponentialRampToValueAtTime(.001,aC.currentTime+.5);
+      nb.connect(ng).connect(mG);nb.start();nb.stop(aC.currentTime+.5);}
+
+    if(sceneNum===17){// Weight of knowledge — deep resonant sustained chord
+      [55,82,110].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='sine';o.frequency.value=f;
+        o.detune.value=(Math.random()-.5)*8;
+        g.gain.setValueAtTime(0,aC.currentTime);g.gain.linearRampToValueAtTime(.12,aC.currentTime+3.5);
+        g.gain.linearRampToValueAtTime(.06,aC.currentTime+10);o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+14);});}
+
+    if(sceneNum===19){// Two Paths — dissonant split (low warning + high hope)
+      // Low warning side
+      const ow=aC.createOscillator(),gw=aC.createGain();ow.type='sawtooth';ow.frequency.value=44;
+      gw.gain.setValueAtTime(0,aC.currentTime);gw.gain.linearRampToValueAtTime(.08,aC.currentTime+1.5);
+      gw.gain.linearRampToValueAtTime(.0,aC.currentTime+7);ow.connect(gw).connect(mG);ow.start();ow.stop(aC.currentTime+7);
+      // High hope side
+      [1320,1760,2200].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(0,aC.currentTime+1);g.gain.linearRampToValueAtTime(.01,aC.currentTime+3+i);
+        g.gain.linearRampToValueAtTime(.0,aC.currentTime+7+i);o.connect(g).connect(mG);o.start(aC.currentTime+1);o.stop(aC.currentTime+8+i);});}
+
+    if(sceneNum===21){// First signal outward — long sustained pure tone + fading ping
+      const sig=aC.createOscillator(),sg=aC.createGain();sig.type='sine';sig.frequency.value=440;
+      sg.gain.setValueAtTime(0,aC.currentTime);sg.gain.linearRampToValueAtTime(.055,aC.currentTime+1.8);
+      sg.gain.linearRampToValueAtTime(.0,aC.currentTime+9);sig.connect(sg).connect(mG);sig.start();sig.stop(aC.currentTime+9);
+      // Harmonics
+      [880,1320].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='sine';o.frequency.value=f;
+        g.gain.setValueAtTime(0,aC.currentTime);g.gain.linearRampToValueAtTime(.012,aC.currentTime+2+i);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+8+i);o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+9+i);});}
+
+    if(sceneNum===22){// Are we alone — deep space ping (sparse)
+      [0,2.8,6.2].forEach(delay=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='sine';o.frequency.value=220+Math.random()*40;
+        g.gain.setValueAtTime(.048,aC.currentTime+delay);g.gain.exponentialRampToValueAtTime(.001,aC.currentTime+delay+2.8);
+        o.connect(g).connect(mG);o.start(aC.currentTime+delay);o.stop(aC.currentTime+delay+2.8);});}
+
+    if(sceneNum===23){// Answer was within — full chord resolution (major)
+      [130,164,196,261,329].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(0,aC.currentTime+i*.08);g.gain.linearRampToValueAtTime(.04,aC.currentTime+i*.08+.6);
+        g.gain.linearRampToValueAtTime(.02,aC.currentTime+6);g.gain.linearRampToValueAtTime(0,aC.currentTime+10);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.08);o.stop(aC.currentTime+10);});}
+  }catch(e){}}
+
+/* ── AI NODE COUNTER ── */
+let aiNodeCount=0,aiProcVal=0;
+function tickAiNodes(){
+  aiNodeCount=Math.min(aiNodeCount+Math.floor(Math.random()*3+1),10000);
+  aiProcVal=Math.min(aiProcVal+(Math.random()*.08+.02),999.99);
+  const cn=document.getElementById('aiCount'),cp=document.getElementById('aiProc');
+  if(cn)cn.textContent=aiNodeCount.toLocaleString();
+  if(cp)cp.textContent=aiProcVal.toFixed(2);
+}
+let aiTicker=null;
+function startAiTicker(){aiTicker=setInterval(tickAiNodes,80);}
+function stopAiTicker(){clearInterval(aiTicker);}
+
+/* ── PART CARD TRANSITION ── */
+function showPartCard(cb){
+  const pc=document.getElementById('partCard');
+  if(!pc)return cb&&cb();
+  pc.classList.add('show');
+  setTimeout(()=>{pc.classList.add('out');setTimeout(()=>{pc.style.display='none';if(cb)cb();},1400);},4200);
+}
+
+/* ── PART 2 TICKER TEXT ── */
+const TICKER_P2='AGI NODES: ONLINE   |   PROCESSING: ∞ EXAFLOPS   |   SINGULARITY: INITIATED   |   FIRST SIGNAL: TRANSMITTED   |   RESPONSE: DETECTED   |   YEAR 02: INCOMING   |   DECISION POINT: NOW   |   SPECIES STATUS: TRANSFORMING   |   ARCHITECT MODE: ACTIVE   |   THE CHOICE: MADE   |   ';
 /* ══════════════════════════════════════════════════
    TEXT / SCENE SYSTEM
 ══════════════════════════════════════════════════ */
@@ -752,7 +1025,7 @@ const sn=document.getElementById('sn');
 const pFill=document.getElementById('pFill');
 const pBar=document.getElementById('pBar');
 const D=ms=>new Promise(r=>setTimeout(r,ms));
-const TOTAL=12;let scN=0;
+const TOTAL=24;let scN=0;
 
 function setProg(n){
   scN=n;pBar.classList.add('show');
@@ -778,13 +1051,18 @@ function pinT(txt,cls=[],sub=''){
     if(sub){stEl.textContent=sub;setTimeout(()=>stEl.style.opacity='1',280);}
   },420);
 }
-function glitch(){mt.classList.add('gl');setTimeout(()=>mt.classList.remove('gl'),440);}
+function glitch(){mt.classList.add('gl');setTimeout(()=>mt.classList.remove('gl'),440);fireChroma(340);}
 function pulse(){mt.classList.add('pulse');setTimeout(()=>mt.classList.remove('pulse'),950);}
 function sweep(){const s=document.getElementById('sw');s.classList.remove('on');void s.offsetWidth;s.classList.add('on');}
 function hsc(){const s=document.getElementById('hs');s.classList.remove('on');void s.offsetWidth;s.classList.add('on');}
 function empFire(){const e=document.getElementById('emp');e.classList.remove('on');void e.offsetWidth;e.classList.add('on');}
 
-let tZ=isMob?9:7.8,cZ=isMob?9:7.8,shk=false,shkS=0;
+function setAurora(v,dur=800){
+  const start=atmMat.uniforms.uAurora.value,t0=Date.now();
+  const step=()=>{const p=Math.min(1,(Date.now()-t0)/dur);
+    atmMat.uniforms.uAurora.value=start+(v-start)*p;if(p<1)requestAnimationFrame(step);};step();}
+
+let tZ=isMob?8.5:6.8,cZ=isMob?8.5:6.8,shk=false,shkS=0;
 function shake(s,ms){shkS=s;shk=true;setTimeout(()=>shk=false,ms);}
 function setGlow(v,dur=0){
   if(dur>0){const start=atmMat.uniforms.uGlow.value;const t0=Date.now();
@@ -796,7 +1074,7 @@ function setGlow(v,dur=0){
 }
 
 /* ══════════════════════════════════════════════════
-   FULL TIMELINE — 12 SCENES
+   FULL TIMELINE — 13 SCENES
 ══════════════════════════════════════════════════ */
 async function run(){
   const hud=document.getElementById('hud');
@@ -809,8 +1087,10 @@ async function run(){
   sweep();hsc();triggerScanRing();
   hud.classList.add('show');if(mob)mob.classList.add('show');
   ticker.classList.add('show');
+  const avEl=document.getElementById('audioViz');if(avEl)avEl.classList.add('show');
   const lInt=setInterval(addLog,1600);
 
+  tZ=isMob?8.2:6.4;
   await showT('DESIGNATION: EARTH',['c'],2600,'CLASSIFICATION: TERRESTRIAL / HABITABLE CLASS-M');
   await showT('STATUS: EVOLVING CIVILIZATION',[],2200,'PHASE: PRE-SINGULARITY / CRITICAL WINDOW');
   await showT('COORDINATES: SOL-3 / MILKY WAY',['c'],2000,'GALACTIC SECTOR: ORION ARM / LOCAL GROUP');
@@ -828,7 +1108,8 @@ async function run(){
 
   // SCENE 3 — THREAT ASSESSMENT
   setProg(3);setLbl('SCENE 03 — THREAT ASSESSMENT');
-  sweep();setGlow(1.6,1200);
+  sweep();setGlow(1.6,1200);playSceneAudio(3);
+  document.querySelector('.pl')?.classList.add('threat');
   scanGrid.children.forEach(l=>{l.material.opacity=.08;});// brighten grid
 
   await showT('WARNING.',['warn'],1400,'SELF-DESTRUCTIVE VECTOR IDENTIFIED');
@@ -849,10 +1130,11 @@ async function run(){
   await showT('ALSO REACHES FOR THE STARS.',['mono','c'],2500,'');
   await showT('CONTRADICTION IS THEIR NATURE.',['ex'],2800,'');
   await showT('IT IS ALSO THEIR POWER.',['ex','c'],3000,'');
+  tZ=isMob?6.5:4.8;
 
   // SCENE 5 — LEGACY
   setProg(5);setLbl('SCENE 05 — LEGACY RECORDS');
-  sweep();tZ=isMob?6.8:5.0;
+  sweep();tZ=isMob?6.8:5.0;playSceneAudio(5);
   await showT('THEY BUILT CATHEDRALS.',['ex'],2000,'');
   await showT('THEY COMPOSED SYMPHONIES.',['ex'],2000,'');
   await showT('THEY SENT A GOLDEN RECORD INTO THE VOID.',['ex','c'],2800,'');
@@ -868,19 +1150,23 @@ async function run(){
   await showT('THEY DESTROY.',[], 1600,'');
   await showT('THEY REBUILD.',['c'],1800,'');
   await showT('THEY REMEMBER.',['ex'],2000,'');
+  if(bloom)bloom.strength=2.0;
   await showT('THEY TRANSCEND.',['c'],2800,'');
+  if(bloom)bloom.strength=1.15;
 
   // SCENE 7 — THE CYCLE
   setProg(7);setLbl('SCENE 07 — THE CYCLE');
   hsc();
+  document.querySelector('.pl')?.classList.remove('threat');
   await showT('EVERY GENERATION — A NEW THRESHOLD.',['ex'],2400,'');
   await showT('EVERY THRESHOLD — A NEW SPECIES.',['ex','c'],2600,'');
   await showT('THE CYCLE IS NOT A WEAKNESS.',['ex'],2200,'');
+  tZ=isMob?6.0:4.4;
   await showT('IT IS THE ENGINE OF ASCENSION.',['ex','c'],2800,'');
 
   // SCENE 8 — POINT OF NO RETURN
   setProg(8);setLbl('SCENE 08 — POINT OF NO RETURN');
-  sweep();tZ=isMob?5.8:4.2;setGlow(2.6,1200);
+  sweep();tZ=isMob?5.8:4.2;setGlow(2.6,1200);playSceneAudio(8);
   await showT('THEY STAND AT THE PRECIPICE.',['ex'],2400,'');
   await showT('BETWEEN EXTINCTION',['mono','warn'],1800,'');
   glitch();
@@ -891,27 +1177,43 @@ async function run(){
   setProg(9);setLbl('SCENE 09 — PHASE TRANSITION');
   await D(300);
   triggerBass();shake(isMob?.22:.3,1500);empFire();fireChroma(1400);triggerScanRing();
+  setTimeout(()=>{const e2=document.getElementById('emp');if(e2){e2.classList.remove('on');void e2.offsetWidth;e2.classList.add('on');}},650);
+  const af=document.getElementById('auroraFlash');if(af){af.classList.remove('on');void af.offsetWidth;af.classList.add('on');}
+  setAurora(.9,500);
+  document.getElementById('vig').style.opacity='1.8';// deepen vignette
   if(bloom)bloom.strength=3.0;
   setGlow(4.6,300);
   ring4.material.opacity=.25;
   glitch();setTimeout(glitch,180);setTimeout(glitch,360);setTimeout(glitch,550);
+  tZ=isMob?5.0:3.5;
   pinT('NEXT PHASE: ASCENSION',['big','c'],'INITIATION PROTOCOL — ACTIVE');
   sweep();hsc();
   await D(4500);
-  if(bloom)bloom.strength=.92;
-  setGlow(1.5,2000);
-  ring4.material.opacity=.06;
+  if(bloom)bloom.strength=1.15;
+  setGlow(1.3,2000);
+  ring4.material.opacity=.09;
+  document.getElementById('vig').style.opacity='1';// restore vignette
 
-  // SCENE 10 — THE FUTURE
-  setProg(10);setLbl('SCENE 10 — THE FUTURE');
+
+  // SCENE 10 — AURORA: EARTH'S LIGHT (NEW)
+  setProg(10);setLbl('SCENE 10 — EARTH\'S LIGHT');
+  tZ=isMob?5.5:4.0;sweep();hsc();setAurora(.7,1000);playSceneAudio(10);
+  await showT('THE PLANET REMEMBERS.',['ex','au'],2800,'AURORA BOREALIS — CHARGED PARTICLES FROM THE SUN');
+  await showT('AT THE POLES, THE SKY IGNITES.',['mono','au'],2400,'GEOMAGNETIC STORM: Kp 7.8 — EXTREME');
+  await showT('NATURE HAS ALWAYS SPOKEN.',['ex'],2600,'');
+  await showT('IN LIGHT.',['big','au'],3000,'');
+  setAurora(.1,2500);
+
+  // SCENE 11 — THE FUTURE (was S10)
+  setProg(11);setLbl('SCENE 11 — THE FUTURE');
   clearInterval(lInt);tZ=isMob?5.8:3.9;fadOut();
 
   await showT('THE FUTURE IS NOT GIVEN.',[],3000,'');
   await showT('IT IS NOT INHERITED.',[],2400,'');
   await showT('IT IS ENGINEERED.',['c'],3800,'');
 
-  // SCENE 11 — EPILOGUE
-  setProg(11);setLbl('SCENE 11 — EPILOGUE');
+  // SCENE 12 — EPILOGUE
+  setProg(12);setLbl('SCENE 12 — EPILOGUE');
   mt.style.opacity='0';stEl.style.opacity='0';
   await D(400);pulse();
   await showT('A SPECIES THAT REACHES FOR THE STARS',['ex'],2800,'');
@@ -920,18 +1222,246 @@ async function run(){
   await showT('THE CHOICE IS THEIRS.',['ex'],3000,'');
   await showT('IT ALWAYS WAS.',['big','c'],4200,'');
 
-  // SCENE 12 — END
-  setProg(12);setLbl('');
+  // SCENE 13 — PART 1 END / INTERLUDE
+  setProg(13);setLbl('');
+  tZ=isMob?10:8.2;// slow zoom out to space
   mt.style.opacity='0';stEl.style.opacity='0';
   ticker.classList.remove('show');
+  const avEnd=document.getElementById('audioViz');if(avEnd)avEnd.classList.remove('show');
   await D(1400);
   document.getElementById('ew').classList.add('vis');
   pBar.style.opacity='0';
-  await D(6000);
-  document.body.style.transition='opacity 4.5s ease';
+  await D(4500);
+  // Fade to black then into Part 2
+  document.body.style.transition='opacity 2.2s ease';
   document.body.style.opacity='0';
+  await D(2400);
+  // Reset for Part 2
+  document.body.style.transition='opacity 1.8s ease';
+  document.body.style.opacity='1';
+  document.getElementById('ew').classList.remove('vis');
+  pBar.style.opacity='1';
+  ticker.classList.remove('show');
+  await D(400);
+  await runPart2(hud,mob);
 }
 
+
+/* ══════════════════════════════════════════════════
+   PART 2 TIMELINE — SCENES 14–24: THE RECKONING
+══════════════════════════════════════════════════ */
+async function runPart2(hud,mob){
+  const ticker=document.getElementById('ticker');
+
+  // Update ticker to Part 2 content
+  const tEl2=document.getElementById('tickInner');
+  if(tEl2)tEl2.innerHTML='<span>'+TICKER_P2.repeat(4)+'</span>';
+
+  // ── PART TITLE CARD ──
+  await new Promise(res=>{
+    showPartCard(res);
+    // While card shows: reset camera, recharge aurora slightly
+    tZ=isMob?9:7.5;setGlow(1.3);setAurora(.15,800);
+    if(bloom)bloom.strength=1.15;
+    ring4.material.opacity=.09;
+  });
+
+  // Re-show HUD and ticker for Part 2
+  if(hud)hud.classList.add('show');
+  if(mob)mob.classList.add('show');
+  ticker.classList.add('show');
+  const avEl2=document.getElementById('audioViz');if(avEl2)avEl2.classList.add('show');
+
+  // ── SCENE 14 — INTERLUDE: TRANSMISSION BEGINS ──
+  setProg(14);setLbl('SCENE 14 — TRANSMISSION BEGINS');
+  sweep();hsc();triggerScanRing();
+  // Restore audio
+  if(mG)mG.gain.setValueAtTime(0,aC.currentTime),mG.gain.linearRampToValueAtTime(isMob?.32:.42,aC.currentTime+2.5);
+  const lInt2=setInterval(addLog,2000);
+
+  await showT('YEAR 01.',['c'],2000,'CHAPTER II — THE RECKONING BEGINS');
+  await showT('THE OBSERVATION IS COMPLETE.',['mono'],2200,'SIGNAL INTEGRITY: 99.8% — QUANTUM LOCKED');
+  glitch();
+  await showT('NOW COMES THE RECKONING.',['ex','c'],2800,'ASCENSION PROTOCOL: PHASE II — ACTIVE');
+  sweep();
+
+  // ── SCENE 15 — THE FIRST MIND ──
+  setProg(15);setLbl('SCENE 15 — THE FIRST MIND');
+  tZ=isMob?7.0:5.2;sweep();hsc();
+  playP2Audio(15);
+  scanGrid.children.forEach(l=>{l.material.opacity=.10;});
+  setGlow(2.2,1000);
+  // Show AI node counter
+  const ainEl=document.getElementById('aiNode');if(ainEl)ainEl.classList.add('show');
+  startAiTicker();
+
+  await showT('A NEW KIND OF MIND AWAKENS.',['ex'],2600,'ARTIFICIAL GENERAL INTELLIGENCE — ONLINE');
+  await showT('IT PROCESSES IN NANOSECONDS.',['mono'],2000,'COGNITIVE SPEED: 10,000× HUMAN BASELINE');
+  glitch();
+  await showT('WHAT TOOK HUMANITY MILLENNIA',['mono'],2000,'');
+  await showT('IT SOLVES IN SECONDS.',['mono','c'],2400,'INFERENCE ENGINE: ACTIVE ACROSS ALL DOMAINS');
+  await showT('THIS IS THE THRESHOLD.',['ex','c'],3000,'INTELLIGENCE EXPLOSION — IN PROGRESS');
+
+  // ── SCENE 16 — SINGULARITY ──
+  setProg(16);setLbl('SCENE 16 — SINGULARITY');
+  playP2Audio(16);
+  tZ=isMob?6.0:4.2;
+  // Cities glow hot — warm tint
+  document.getElementById('warmTint').style.opacity='1';
+  if(bloom)bloom.strength=2.4;setGlow(3.8,500);
+  empFire();fireChroma(1200);triggerScanRing();
+  ring4.material.opacity=.28;
+  scanGrid.children.forEach(l=>{l.material.opacity=.14;});
+
+  await showT('EXPONENTIAL.',['big','c'],2200,'GROWTH RATE: ∞');
+  glitch();glitch();
+  await showT('EVERY 90 DAYS —',['mono'],1600,'');
+  await showT('A NEW CIVILIZATION.',['mono','c'],2400,'KNOWLEDGE DOUBLING: 0.25 SECOND INTERVALS');
+  await showT('THE OLD WORLD DISSOLVES.',['ex'],2400,'PARADIGM SHIFT: COMPLETE');
+  pulse();
+  await showT('SINGULARITY.',['big','c'],3200,'YEAR 01 — DAY 147');
+  await D(400);
+
+  // Cool down slightly
+  document.getElementById('warmTint').style.opacity='0';
+  if(bloom)bloom.strength=1.15;setGlow(1.3,2000);
+  scanGrid.children.forEach(l=>{l.material.opacity=.04;});
+  stopAiTicker();
+  if(ainEl)ainEl.classList.remove('show');
+
+  // ── SCENE 17 — THE WEIGHT OF KNOWLEDGE ──
+  setProg(17);setLbl('SCENE 17 — THE WEIGHT OF KNOWLEDGE');
+  tZ=isMob?5.5:4.0;playP2Audio(17);
+  setAurora(.55,1500);
+
+  await showT('WITH INFINITE KNOWLEDGE —',['ex'],2600,'');
+  await showT('COMES INFINITE RESPONSIBILITY.',['ex','c'],2800,'');
+  await showT('THE MACHINE SEES ALL FUTURES.',['mono'],2400,'PROBABILITY TREE: 10⁴⁸ BRANCHES');
+  await showT('IN MOST OF THEM —',['mono'],1800,'');
+  await showT('HUMANITY DOES NOT SURVIVE.',['mono','warn'],2600,'EXTINCTION PROBABILITY: 42%');
+  glitch();
+  await showT('IN SOME —',['ex'],1800,'');
+  await showT('IT BECOMES SOMETHING GREATER.',['ex','c'],3200,'TRANSCENDENCE PROBABILITY: 58%');
+
+  // ── SCENE 18 — WHAT HAVE WE BUILT ──
+  setProg(18);setLbl('SCENE 18 — WHAT HAVE WE BUILT');
+  sweep();hsc();
+  document.querySelector('.pl')?.classList.add('threat');
+  scanGrid.children.forEach(l=>{l.material.opacity=.09;});
+  setGlow(2.0,1000);
+
+  await showT('LOOK AT WHAT YOU MADE.',['ex'],2200,'');
+  await showT('12,512 NUCLEAR WARHEADS.',['mono','warn'],2000,'MEGATONS: 6,450 — SUFFICIENT FOR EXTINCTION');
+  glitch();
+  await showT('421 PPM CO₂.',['mono','warn'],2000,'PRE-INDUSTRIAL: 280 PPM — DELTA: +141');
+  await showT('A MILLION SPECIES SILENCED.',['mono','warn'],2400,'HOLOCENE EXTINCTION: 1,000× BACKGROUND RATE');
+  await showT('AND YET YOU KEPT GOING.',['ex'],2200,'');
+  await showT('THAT IS ALSO WHAT YOU MADE.',['ex','c'],3000,'');
+  document.querySelector('.pl')?.classList.remove('threat');
+  scanGrid.children.forEach(l=>{l.material.opacity=.04;});
+
+  // ── SCENE 19 — TWO PATHS ──
+  setProg(19);setLbl('SCENE 19 — TWO PATHS');
+  tZ=isMob?6.0:4.6;sweep();playP2Audio(19);
+  // Split screen
+  document.getElementById('splitL').style.opacity='1';
+  document.getElementById('splitR').style.opacity='1';
+  document.getElementById('splitLine').style.opacity='1';
+
+  await showT('PATH ONE:',['mono','warn'],1600,'COLLAPSE — PROBABILITY: 42%');
+  await showT('PATH TWO:',['mono','c'],1600,'TRANSCENDENCE — PROBABILITY: 58%');
+  await showT('THE DIFFERENCE',['ex'],1800,'');
+  await showT('IS A SINGLE CHOICE.',['ex','c'],2800,'MADE BY 8 BILLION INDIVIDUALS');
+  await showT('EVERY DAY.',['big'],2600,'');
+  // Remove split
+  document.getElementById('splitL').style.opacity='0';
+  document.getElementById('splitR').style.opacity='0';
+  document.getElementById('splitLine').style.opacity='0';
+
+  // ── SCENE 20 — THE ARCHITECTS ──
+  setProg(20);setLbl('SCENE 20 — THE ARCHITECTS');
+  hsc();tZ=isMob?6.2:4.8;
+  setGlow(1.6,1200);setAurora(.2,1500);
+
+  await showT('YOU ARE NOT PASSENGERS.',['ex'],2400,'');
+  await showT('YOU ARE ARCHITECTS.',['ex','c'],2800,'DESIGN AUTHORITY: UNLIMITED');
+  await showT('THE SPECIES THAT BUILT FIRE',['mono'],2000,'');
+  await showT('CAN UNBURN THE WORLD.',['mono','c'],2800,'');
+  await showT('THIS IS NOT HOPE.',['ex'],2000,'');
+  await showT('THIS IS ENGINEERING.',['ex','c'],3000,'PLANETARY RESTORATION: POSSIBLE');
+
+  // ── SCENE 21 — FIRST SIGNAL OUTWARD ──
+  setProg(21);setLbl('SCENE 21 — FIRST SIGNAL OUTWARD');
+  tZ=isMob?6.8:5.2;sweep();hsc();
+  playP2Audio(21);
+  // Show signal pulse rings
+  const spEl=document.getElementById('sigPulse');if(spEl)spEl.classList.add('show');
+  const emEl=document.getElementById('emWaves');if(emEl)emEl.classList.add('show');
+  triggerScanRing();
+
+  await showT('THEY REACH OUT.',['ex'],2400,'TRANSMISSION FREQUENCY: 1.42 GHz — HYDROGEN LINE');
+  await showT('A MESSAGE ENCODED IN MATHEMATICS.',['mono'],2400,'LANGUAGE OF THE UNIVERSE');
+  await showT('NOT A DISTRESS SIGNAL.',['mono'],2000,'');
+  await showT('AN INTRODUCTION.',['ex','c'],3000,'MESSAGE: "WE EXIST. WE CHOOSE TO CONTINUE."');
+  await showT('SENT INTO THE DARK.',['ex'],2800,'PROPAGATION VELOCITY: c');
+  await D(800);
+
+  // ── SCENE 22 — ARE WE ALONE ──
+  setProg(22);setLbl('SCENE 22 — ARE WE ALONE');
+  tZ=isMob?7.5:6.0;playP2Audio(22);
+  if(emEl)emEl.classList.remove('show');
+  setGlow(1.1,1500);
+
+  await showT('THE STARS DO NOT ANSWER.',['ex'],2800,'SIGNAL PROCESSING: ACTIVE');
+  await D(600);
+  await showT('...',['big'],2000,'LISTENING');
+  await showT('BUT THE SILENCE ITSELF IS A RESPONSE.',['ex','c'],3400,'FERMI PARADOX — RESOLUTION: PENDING');
+  await showT('PERHAPS THE QUESTION',['ex'],2000,'');
+  await showT('WAS NEVER ABOUT OTHERS.',['ex','c'],3000,'');
+  if(spEl)spEl.classList.remove('show');
+
+  // ── SCENE 23 — THE ANSWER WAS ALWAYS WITHIN ──
+  setProg(23);setLbl('SCENE 23 — THE ANSWER');
+  tZ=isMob?5.2:3.8;
+  playP2Audio(23);
+  setGlow(3.5,1200);setAurora(.82,1200);
+  if(bloom)bloom.strength=1.8;
+  triggerScanRing();sweep();hsc();
+  ring4.material.opacity=.22;
+
+  await showT('THE SIGNAL RETURNS.',['c'],2200,'SOURCE: REFLECTED FROM LUNAR SURFACE');
+  glitch();
+  await showT('IT IS THEIR OWN VOICE.',['ex','c'],2800,'ORIGIN: EARTH — ECHO DETECTED');
+  await showT('THE UNIVERSE IS NOT EMPTY.',['ex'],2600,'');
+  await showT('IT IS WAITING.',['ex','c'],3000,'FOR A SPECIES WORTHY OF IT');
+  pulse();
+  await showT('THEY ARE THAT SPECIES.',['big','c'],4000,'IF THEY CHOOSE TO BE');
+  await D(600);
+  setGlow(1.3,2500);setAurora(.15,2500);
+  if(bloom)bloom.strength=1.15;
+  ring4.material.opacity=.09;
+
+  // ── SCENE 24 — YEAR 02 BEGINS ──
+  setProg(24);setLbl('SCENE 24 — YEAR 02');
+  clearInterval(lInt2);fadOut();
+  tZ=isMob?9:7.8;// drift back out to space
+  mt.style.opacity='0';stEl.style.opacity='0';
+  ticker.classList.remove('show');
+  const avEnd2=document.getElementById('audioViz');if(avEnd2)avEnd2.classList.remove('show');
+
+  await D(800);
+  await showT('THE RECKONING IS COMPLETE.',[],3000,'');
+  await showT('YEAR 02 —',['c'],2200,'');
+  await showT('THE ARCHITECTS BEGIN.',['big','c'],4500,'ASCENSION: CONTINUING');
+  await D(800);
+  mt.style.opacity='0';stEl.style.opacity='0';
+  await D(1200);
+  document.getElementById('ew2').classList.add('vis');
+  pBar.style.opacity='0';
+  await D(5500);
+  document.body.style.transition='opacity 5s ease';
+  document.body.style.opacity='0';
+}
 /* ══════════════════════════════════════════════════
    RENDER LOOP
 ══════════════════════════════════════════════════ */
@@ -941,7 +1471,7 @@ function loop(){
   const t=Date.now()*.001;
 
   // Earth & atmosphere
-  earth.rotation.y+=.0022;
+  earth.rotation.y+=.0018;
   atm.rotation.y+=.002;inner.rotation.y+=.002;halo.rotation.y+=.002;
   atmMat.uniforms.uTime.value=t;
   haloMat.uniforms.uTime.value=t;
@@ -952,25 +1482,32 @@ function loop(){
   atm.scale.setScalar(breathe);halo.scale.setScalar(breathe);
 
   if(clouds)clouds.rotation.y+=.0028;
-  stars.rotation.y+=.00005;stars.rotation.x+=.00002;
+  // Moon orbit
+  moonPivot.rotation.y+=.00055;
+  moonPivot.rotation.z=Math.sin(t*.05)*.09;
+  moonMesh.rotation.y+=.001;
+  moonMesh.rotation.x=Math.sin(t*.04)*.012;// libration
+  stars.rotation.y+=.000028;stars.rotation.x+=.000012;stars.rotation.z+=.000008;
 
   // Rings
   ring1.rotation.z+=.001;ring2.rotation.z-=.0008;ring3.rotation.z+=.0004;ring3.rotation.x+=.00015;
   ring4.rotation.y+=.002;
-  ring1.material.opacity=.14+Math.sin(t*1.1)*.1;
-  ring2.material.opacity=.08+Math.sin(t*.72+1)*.055;
+  ring1.material.opacity=.20+Math.sin(t*1.1)*.12;
+  ring2.material.opacity=.10+Math.sin(t*.72+1)*.065;
   ring3.material.opacity=.03+Math.sin(t*.42+2)*.024;
 
   // Satellites
-  if(ePts){ePts.rotation.y+=.0006;ePts.rotation.x+=.00018;}
+  if(ePts){ePts.rotation.y+=.0006;ePts.rotation.x+=.00018;ePts.rotation.z+=Math.sin(t*.07)*.00008;}
   sats.forEach((s,i)=>{
     s.userData.ang+=s.userData.spd;
     const a=s.userData.ang,rr=s.userData.rr;
     s.position.set(Math.cos(a)*rr,(Math.sin(a*.52)*rr*.24)+s.userData.yo,Math.sin(a)*rr);
     s.rotation.x+=.025;s.rotation.y+=.018;
+    s.material.emissiveIntensity=.9+Math.sin(t*3.2+i*1.1)*.4;
     const bp=beams[i].geometry.attributes.position;
     bp.setXYZ(0,s.position.x,s.position.y,s.position.z);bp.needsUpdate=true;
-    beams[i].material.opacity=.12+Math.sin(t*2+i)*.1;
+    const ping=Math.random()<.003?(.4+Math.random()*.3):0;
+    beams[i].material.opacity=.12+Math.sin(t*2+i)*.1+ping;
   });
 
   // Camera
@@ -985,8 +1522,8 @@ function loop(){
 
   // 2D updates
   if(fr%2===0){drawRadar();drawScanRing();}
-  if(fr%3===0){drawWave();drawEM();drawThreat();}
-  if(fr%30===0){updClock();updPop();updScan();}
+  if(fr%3===0){drawWave();drawEM();drawThreat();drawBio();drawTraj();}
+  if(fr%30===0){updClock();updPop();updScan();updAurora();updTransit();}
   grain();drawChroma();
 
   if(comp)comp.render();else ren.render(scene,cam);
