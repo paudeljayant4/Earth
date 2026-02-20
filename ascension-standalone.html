@@ -206,7 +206,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 /* show backdrop whenever #mt is visible */
 #mt[style*="opacity: 1"] ~ * { /* JS sets inline opacity — we rely on the backdrop always being present at low opacity */ }
 /* Always-on subtle backdrop so text never floats on pure brightness */
-#ov{background:radial-gradient(ellipse at center,rgba(0,0,0,.38) 0%,rgba(0,0,0,.18) 45%,transparent 72%);}
+#ov{background:radial-gradient(ellipse 75% 52% at center,rgba(0,0,0,.42) 0%,rgba(0,0,0,.22) 52%,transparent 78%);}
 
 #mt{
   font-family:'Orbitron',sans-serif;
@@ -217,7 +217,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   letter-spacing:clamp(.1em,.18em,.2em);
   text-transform:uppercase;
   opacity:0;
-  transition:opacity 1.5s ease;
+  transition:opacity 1.2s ease, transform 1.1s cubic-bezier(.22,1,.36,1);
   /* layered shadow: dark drop first for contrast, then colour glow */
   text-shadow:
     0 2px 12px rgba(0,0,0,.95),
@@ -225,7 +225,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
     0 0 40px rgba(0,195,255,.22);
   max-width:min(72vw,760px);
   line-height:1.65;
-  will-change:opacity;
+  will-change:transform,opacity;
   /* subtle letter spacing boost for small sizes */
   -webkit-font-smoothing:antialiased;
   paint-order:stroke fill;
@@ -311,7 +311,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 /* sub text — caption line below main text */
 #st{
   position:fixed;
-  bottom:clamp(11vh,13.5vh,16vh);
+  bottom:clamp(9vh,11.5vh,14vh);
   left:50%;
   transform:translateX(-50%);
   font-family:'Share Tech Mono',monospace;
@@ -332,10 +332,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
     0 0 16px rgba(0,195,255,.55);
 }
 /* scene label */
-#sl{position:fixed;top:8.3vh;left:50%;transform:translateX(-50%);
+#sl{position:fixed;top:8.5vh;left:50%;transform:translateX(-50%);
   font-family:'Share Tech Mono',monospace;font-size:clamp(.44rem,1vw,.58rem);
-  letter-spacing:.48em;color:rgba(0,195,255,.22);z-index:9;pointer-events:none;
-  opacity:0;transition:opacity .8s;white-space:nowrap;}
+  letter-spacing:.44em;color:rgba(0,195,255,.28);z-index:9;pointer-events:none;
+  opacity:0;transition:opacity 1.2s ease;white-space:nowrap;
+  text-shadow:0 1px 6px rgba(0,0,0,.8);}
 /* scene number indicator */
 #sn{position:fixed;top:8.3vh;right:1.5vw;font-family:'Share Tech Mono',monospace;
   font-size:.55rem;letter-spacing:.2em;color:rgba(0,195,255,.22);z-index:9;pointer-events:none;}
@@ -397,9 +398,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   letter-spacing:clamp(.1em,.2em,.22em);color:var(--c);
   text-shadow:0 0 32px var(--c),0 0 80px rgba(0,195,255,.15);
   animation:iF 2.4s .3s ease both;opacity:0;}
-#pcSub{font-family:'Exo 2',sans-serif;font-style:italic;font-weight:100;
-  font-size:clamp(.5rem,1.4vw,.78rem);letter-spacing:.22em;
-  color:rgba(255,255,255,.2);margin-top:14px;
+#pcSub{font-family:'Exo 2',sans-serif;font-style:italic;font-weight:300;
+  font-size:clamp(.54rem,1.5vw,.82rem);letter-spacing:.2em;
+  color:rgba(255,255,255,.32);margin-top:14px;
+  text-shadow:0 1px 8px rgba(0,0,0,.9);
   animation:iF 2.8s .6s ease both;opacity:0;}
 
 /* ─ EM WAVE RINGS (concentric signal pulses) ─ */
@@ -557,9 +559,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   animation:iF 2.4s .3s ease both;opacity:0;
 }
 #pc3Sub{
-  font-family:'Exo 2',sans-serif;font-style:italic;font-weight:400;
-  font-size:clamp(.5rem,1.4vw,.78rem);letter-spacing:.22em;
-  color:rgba(255,255,255,.22);margin-top:14px;
+  font-family:'Exo 2',sans-serif;font-style:italic;font-weight:300;
+  font-size:clamp(.54rem,1.5vw,.82rem);letter-spacing:.2em;
+  color:rgba(255,255,255,.32);margin-top:14px;
+  text-shadow:0 1px 8px rgba(0,0,0,.9);
   animation:iF 2.8s .6s ease both;opacity:0;
 }
 
@@ -1847,20 +1850,56 @@ function setLbl(t){sl.textContent=t;sl.style.opacity=t?'1':'0';}
 
 function showT(txt,cls=[],dur=3000,sub=''){
   return new Promise(res=>{
-    mt.className='';stEl.style.opacity='0';mt.style.opacity='0';
+    // ── FADE OUT current text smoothly ──
+    mt.style.opacity='0';
+    stEl.style.opacity='0';
+    // Brief breathe gap — long enough for CSS transition (1.5s) to nearly complete
+    // but short to keep rhythm tight. 320ms = starts fading before fully gone,
+    // overlapping = cinematic dissolve feel, not a hard blink.
     setTimeout(()=>{
-      mt.textContent=txt;cls.forEach(c=>mt.classList.add(c));mt.style.opacity='1';
-      if(sub){stEl.textContent=sub;setTimeout(()=>stEl.style.opacity='1',380);}
-      setTimeout(()=>{mt.style.opacity='0';stEl.style.opacity='0';setTimeout(res,1200);},dur);
-    },420);
+      mt.className='';
+      mt.textContent=txt;
+      // Slight upward arrival — reset transform then let CSS handle it
+      mt.style.transform='translateY(8px)';
+      mt.style.transition='opacity 1.2s ease, transform 1.1s cubic-bezier(.22,1,.36,1)';
+      cls.forEach(c=>mt.classList.add(c));
+      // Small tick to let browser register the starting state
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          mt.style.opacity='1';
+          mt.style.transform='translateY(0)';
+        });
+      });
+      // Sub-text enters after main is fully visible
+      if(sub){
+        stEl.textContent=sub;
+        stEl.style.opacity='0';
+        setTimeout(()=>stEl.style.opacity='1',680);
+      }
+      // Hold for dur, then fade out
+      setTimeout(()=>{
+        mt.style.opacity='0';
+        mt.style.transform='translateY(-5px)';
+        stEl.style.opacity='0';
+        // Gap between fade-out start and next text starts arriving
+        setTimeout(res,900);
+      },dur);
+    },280);
   });
 }
 function pinT(txt,cls=[],sub=''){
-  mt.className='';mt.style.opacity='0';stEl.style.opacity='0';
+  mt.style.opacity='0';stEl.style.opacity='0';
   setTimeout(()=>{
-    mt.textContent=txt;cls.forEach(c=>mt.classList.add(c));mt.style.opacity='1';
-    if(sub){stEl.textContent=sub;setTimeout(()=>stEl.style.opacity='1',280);}
-  },420);
+    mt.className='';mt.textContent=txt;
+    mt.style.transform='translateY(8px)';
+    mt.style.transition='opacity 1.2s ease, transform 1.1s cubic-bezier(.22,1,.36,1)';
+    cls.forEach(c=>mt.classList.add(c));
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      mt.style.opacity='1';mt.style.transform='translateY(0)';
+    }));
+    if(sub){stEl.textContent=sub;stEl.style.opacity='0';
+      setTimeout(()=>stEl.style.opacity='1',600);}
+  },280);
 }
 function glitch(){mt.classList.add('gl');setTimeout(()=>mt.classList.remove('gl'),440);fireChroma(340);}
 function pulse(){mt.classList.add('pulse');setTimeout(()=>mt.classList.remove('pulse'),950);}
@@ -1902,87 +1941,106 @@ async function run(){
   const lInt=setInterval(addLog,1600);
 
   tZ=isMob?8.2:6.4;
-  await showT('DESIGNATION: EARTH',['c'],2600,'CLASSIFICATION: TERRESTRIAL / HABITABLE CLASS-M');
-  await showT('STATUS: EVOLVING CIVILIZATION',[],2200,'PHASE: PRE-SINGULARITY / CRITICAL WINDOW');
-  await showT('COORDINATES: SOL-3 / MILKY WAY',['c'],2000,'GALACTIC SECTOR: ORION ARM / LOCAL GROUP');
+  await D(500);// let HUD settle before first word
+  await showT('DESIGNATION: EARTH',['c'],3000,'CLASSIFICATION: TERRESTRIAL / HABITABLE CLASS-M');
+  await showT('STATUS: EVOLVING CIVILIZATION',[],2600,'PHASE: PRE-SINGULARITY / CRITICAL WINDOW');
+  await showT('COORDINATES: SOL-3 / MILKY WAY',['c'],2400,'GALACTIC SECTOR: ORION ARM / LOCAL GROUP');
+  await D(300);
 
   // SCENE 2 — BIOMETRIC ANALYSIS
   setProg(2);setLbl('SCENE 02 — BIOMETRIC ANALYSIS');
   tZ=isMob?7.2:5.6;buildUp();sweep();hsc();
 
-  await showT('8,000,000,000 UNITS',['mono'],2000,'HOMO SAPIENS — CARBON-BASED / CLASS-B BIOLOGICAL');
-  await showT('RAPID TECHNOLOGICAL GROWTH',['mono'],1900,'PROCESSING CAPACITY: +147% PER DECADE');
-  glitch();
-  await showT('UNSTABLE ENVIRONMENTAL SYSTEMS',['mono'],2000,'CRITICAL: 6 OF 9 PLANETARY LIMITS BREACHED');
-  await showT('EXPONENTIAL INTELLIGENCE CURVE',['mono'],2000,'AGI EMERGENCE: 94.7% PROBABILITY');
-  await showT('CLASS-7 CIVILIZATION MARKER',['c','mono'],2200,'SINGULARITY INDEX: 8.4 / 10.0');
+  await showT('8,000,000,000 UNITS',['mono'],2600,'HOMO SAPIENS — CARBON-BASED / CLASS-B BIOLOGICAL');
+  await showT('RAPID TECHNOLOGICAL GROWTH',['mono'],2400,'PROCESSING CAPACITY: +147% PER DECADE');
+  await D(180);glitch();await D(220);
+  await showT('UNSTABLE ENVIRONMENTAL SYSTEMS',['mono'],2600,'CRITICAL: 6 OF 9 PLANETARY LIMITS BREACHED');
+  await showT('EXPONENTIAL INTELLIGENCE CURVE',['mono'],2400,'AGI EMERGENCE: 94.7% PROBABILITY');
+  await showT('CLASS-7 CIVILIZATION MARKER',['c','mono'],2800,'SINGULARITY INDEX: 8.4 / 10.0');
+  await D(400);
 
   // SCENE 3 — THREAT ASSESSMENT
   setProg(3);setLbl('SCENE 03 — THREAT ASSESSMENT');
   sweep();setGlow(1.6,1200);playSceneAudio(3);
   document.querySelector('.pl')?.classList.add('threat');
-  scanGrid.children.forEach(l=>{l.material.opacity=.08;});// brighten grid
-
-  await showT('WARNING.',['warn'],1400,'SELF-DESTRUCTIVE VECTOR IDENTIFIED');
-  glitch();
-  await showT('SPECIES CONSUMING ITS OWN HABITAT.',['mono'],2200,'ECOLOGICAL COLLAPSE PROBABILITY: 67%');
-  await showT('WEAPONS OF TOTAL ANNIHILATION.',['mono'],2000,'NUCLEAR WARHEADS ACTIVE: 12,512');
-  await showT('BIOSPHERE DESTABILIZING.',['mono','warn'],2000,'TIME TO TIPPING POINT: UNKNOWN');
-  await showT('AND YET...',['ex'],2200,'');
+  scanGrid.children.forEach(l=>{l.material.opacity=.08;});
+  await D(700);// wait for grid brighten and threat border to settle
+  await showT('WARNING.',['warn'],2000,'SELF-DESTRUCTIVE VECTOR IDENTIFIED');
+  await D(200);glitch();await D(300);
+  await showT('SPECIES CONSUMING ITS OWN HABITAT.',['mono'],2800,'ECOLOGICAL COLLAPSE PROBABILITY: 67%');
+  await showT('WEAPONS OF TOTAL ANNIHILATION.',['mono'],2600,'NUCLEAR WARHEADS ACTIVE: 12,512');
+  await showT('BIOSPHERE DESTABILIZING.',['mono','warn'],2600,'TIME TO TIPPING POINT: UNKNOWN');
+  await D(500);
+  await showT('AND YET...',['ex'],2800,'');
+  await D(400);
 
   // SCENE 4 — THE PARADOX
   setProg(4);setLbl('SCENE 04 — THE PARADOX');
   hsc();scanGrid.children.forEach(l=>{l.material.opacity=.04;});
 
-  await showT('THE SAME SPECIES...',['ex'],2200,'');
-  await showT('THAT POISONS ITS OCEANS',['mono'],1900,'');
-  await showT('BUILDS MACHINES THAT THINK.',['mono'],1900,'');
-  await showT('THAT WAGES WAR',['mono'],1700,'');
-  await showT('ALSO REACHES FOR THE STARS.',['mono','c'],2500,'');
-  await showT('CONTRADICTION IS THEIR NATURE.',['ex'],2800,'');
-  await showT('IT IS ALSO THEIR POWER.',['ex','c'],3000,'');
+  await showT('THE SAME SPECIES...',['ex'],2600,'');
+  await D(200);
+  await showT('THAT POISONS ITS OCEANS',['mono'],2200,'');
+  await showT('BUILDS MACHINES THAT THINK.',['mono'],2400,'');
+  await D(200);
+  await showT('THAT WAGES WAR',['mono'],2200,'');
+  await showT('ALSO REACHES FOR THE STARS.',['mono','c'],2800,'');
+  await D(400);
+  await showT('CONTRADICTION IS THEIR NATURE.',['ex'],3000,'');
+  await showT('IT IS ALSO THEIR POWER.',['ex','c'],3400,'');
+  await D(300);
   tZ=isMob?6.5:4.8;
 
   // SCENE 5 — LEGACY
   setProg(5);setLbl('SCENE 05 — LEGACY RECORDS');
   sweep();tZ=isMob?6.8:5.0;playSceneAudio(5);
-  await showT('THEY BUILT CATHEDRALS.',['ex'],2000,'');
-  await showT('THEY COMPOSED SYMPHONIES.',['ex'],2000,'');
-  await showT('THEY SENT A GOLDEN RECORD INTO THE VOID.',['ex','c'],2800,'');
-  await showT('A SPECIES THAT SAYS:',['ex'],1800,'');
-  await showT('"WE WERE HERE."',['big','c'],3200,'VOYAGER-1 / LAUNCHED: SEPT 5, 1977');
+  await D(300);
+  await showT('THEY BUILT CATHEDRALS.',['ex'],2600,'');
+  await showT('THEY COMPOSED SYMPHONIES.',['ex'],2600,'');
+  await D(200);
+  await showT('THEY SENT A GOLDEN RECORD INTO THE VOID.',['ex','c'],3200,'');
+  await D(300);
+  await showT('A SPECIES THAT SAYS:',['ex'],2200,'');
+  await showT('"WE WERE HERE."',['big','c'],4000,'VOYAGER-1 / LAUNCHED: SEPT 5, 1977');
   pulse();await D(600);
 
   // SCENE 6 — TRANSFORMATION
   setProg(6);setLbl('SCENE 06 — TRANSFORMATION');
   tZ=isMob?6.2:4.6;sweep();hsc();setGlow(2.0,1500);
 
-  await showT('THEY CREATE.',['c'],1800,'');
-  await showT('THEY DESTROY.',[], 1600,'');
-  await showT('THEY REBUILD.',['c'],1800,'');
-  await showT('THEY REMEMBER.',['ex'],2000,'');
+  await D(300);
+  await showT('THEY CREATE.',['c'],2200,'');
+  await showT('THEY DESTROY.',[],2000,'');
+  await showT('THEY REBUILD.',['c'],2200,'');
+  await showT('THEY REMEMBER.',['ex'],2600,'');
+  await D(300);
   if(bloom)bloom.strength=2.0;
-  await showT('THEY TRANSCEND.',['c'],2800,'');
+  await showT('THEY TRANSCEND.',['c'],3200,'');
   if(bloom)bloom.strength=1.15;
 
   // SCENE 7 — THE CYCLE
   setProg(7);setLbl('SCENE 07 — THE CYCLE');
   hsc();
   document.querySelector('.pl')?.classList.remove('threat');
-  await showT('EVERY GENERATION — A NEW THRESHOLD.',['ex'],2400,'');
-  await showT('EVERY THRESHOLD — A NEW SPECIES.',['ex','c'],2600,'');
-  await showT('THE CYCLE IS NOT A WEAKNESS.',['ex'],2200,'');
+  await D(400);
+  await showT('EVERY GENERATION — A NEW THRESHOLD.',['ex'],2800,'');
+  await showT('EVERY THRESHOLD — A NEW SPECIES.',['ex','c'],3000,'');
+  await D(200);
+  await showT('THE CYCLE IS NOT A WEAKNESS.',['ex'],2600,'');
   tZ=isMob?6.0:4.4;
   await showT('IT IS THE ENGINE OF ASCENSION.',['ex','c'],2800,'');
 
   // SCENE 8 — POINT OF NO RETURN
   setProg(8);setLbl('SCENE 08 — POINT OF NO RETURN');
   sweep();tZ=isMob?5.8:4.2;setGlow(2.6,1200);playSceneAudio(8);
-  await showT('THEY STAND AT THE PRECIPICE.',['ex'],2400,'');
-  await showT('BETWEEN EXTINCTION',['mono','warn'],1800,'');
-  glitch();
-  await showT('AND TRANSCENDENCE.',['mono','c'],2800,'');
-  await showT('THE CHOICE HAS ALWAYS BEEN THEIRS.',['ex'],3000,'');
+  await D(400);
+  await showT('THEY STAND AT THE PRECIPICE.',['ex'],2800,'');
+  await D(300);
+  await showT('BETWEEN EXTINCTION',['mono','warn'],2400,'');
+  await D(180);glitch();await D(250);
+  await showT('AND TRANSCENDENCE.',['mono','c'],3200,'');
+  await D(400);
+  await showT('THE CHOICE HAS ALWAYS BEEN THEIRS.',['ex'],3400,'');
 
   // SCENE 9 — ASCENSION DROP
   setProg(9);setLbl('SCENE 09 — PHASE TRANSITION');
@@ -2003,7 +2061,8 @@ async function run(){
   if(bloom)bloom.strength=1.15;
   setGlow(1.3,2000);
   ring4.material.opacity=.09;
-  document.getElementById('vig').style.opacity='1';// restore vignette
+  document.getElementById('vig').style.opacity='1';
+  await D(1200);// let the aftermath settle — bloom and glow cooling
 
 
   // SCENE 10 — AURORA: EARTH'S LIGHT (NEW)
@@ -2018,20 +2077,24 @@ async function run(){
   // SCENE 11 — THE FUTURE (was S10)
   setProg(11);setLbl('SCENE 11 — THE FUTURE');
   clearInterval(lInt);tZ=isMob?5.8:3.9;fadOut();
+  await D(600);// breathe before the final act begins
 
-  await showT('THE FUTURE IS NOT GIVEN.',[],3000,'');
-  await showT('IT IS NOT INHERITED.',[],2400,'');
-  await showT('IT IS ENGINEERED.',['c'],3800,'');
+  await showT('THE FUTURE IS NOT GIVEN.',[],3400,'');
+  await D(200);
+  await showT('IT IS NOT INHERITED.',[],2800,'');
+  await D(300);
+  await showT('IT IS ENGINEERED.',['c'],4200,'');
 
   // SCENE 12 — EPILOGUE
   setProg(12);setLbl('SCENE 12 — EPILOGUE');
   mt.style.opacity='0';stEl.style.opacity='0';
   await D(400);pulse();
-  await showT('A SPECIES THAT REACHES FOR THE STARS',['ex'],2800,'');
-  await showT('MUST FIRST CONQUER ITSELF.',['ex','c'],3200,'');
   await D(400);
-  await showT('THE CHOICE IS THEIRS.',['ex'],3000,'');
-  await showT('IT ALWAYS WAS.',['big','c'],4200,'');
+  await showT('A SPECIES THAT REACHES FOR THE STARS',['ex'],3200,'');
+  await showT('MUST FIRST CONQUER ITSELF.',['ex','c'],3600,'');
+  await D(600);
+  await showT('THE CHOICE IS THEIRS.',['ex'],3400,'');
+  await showT('IT ALWAYS WAS.',['big','c'],4800,'');
 
   // SCENE 13 — PART 1 END / INTERLUDE
   setProg(13);setLbl('');
@@ -2044,11 +2107,10 @@ async function run(){
   pBar.style.opacity='0';
   await D(4500);
   // Fade to black then into Part 2
-  document.body.style.transition='opacity 2.2s ease';
+  document.body.style.transition='opacity 2.8s ease';
   document.body.style.opacity='0';
-  await D(2400);
-  // Reset for Part 2
-  document.body.style.transition='opacity 1.8s ease';
+  await D(3200);// hold black — let the viewer breathe and the chapter III card be awaited
+  document.body.style.transition='opacity 2s ease';
   document.body.style.opacity='1';
   document.getElementById('ew').classList.remove('vis');
   pBar.style.opacity='1';
@@ -2090,10 +2152,13 @@ async function runPart2(hud,mob){
   if(mG)mG.gain.setValueAtTime(0,aC.currentTime),mG.gain.linearRampToValueAtTime(isMob?.32:.42,aC.currentTime+2.5);
   const lInt2=setInterval(addLog,2000);
 
-  await showT('YEAR 01.',['c'],2000,'CHAPTER II — THE RECKONING BEGINS');
-  await showT('THE OBSERVATION IS COMPLETE.',['mono'],2200,'SIGNAL INTEGRITY: 99.8% — QUANTUM LOCKED');
-  glitch();
-  await showT('NOW COMES THE RECKONING.',['ex','c'],2800,'ASCENSION PROTOCOL: PHASE II — ACTIVE');
+  await D(600);// re-entry breathing space
+  await showT('YEAR 01.',['c'],2600,'CHAPTER II — THE RECKONING BEGINS');
+  await D(200);
+  await showT('THE OBSERVATION IS COMPLETE.',['mono'],2800,'SIGNAL INTEGRITY: 99.8% — QUANTUM LOCKED');
+  await D(200);glitch();await D(280);
+  await showT('NOW COMES THE RECKONING.',['ex','c'],3400,'ASCENSION PROTOCOL: PHASE II — ACTIVE');
+  await D(400);
   sweep();
 
   // ── SCENE 15 — THE FIRST MIND ──
@@ -2106,12 +2171,14 @@ async function runPart2(hud,mob){
   const ainEl=document.getElementById('aiNode');if(ainEl)ainEl.classList.add('show');
   startAiTicker();
 
-  await showT('A NEW KIND OF MIND AWAKENS.',['ex'],2600,'ARTIFICIAL GENERAL INTELLIGENCE — ONLINE');
-  await showT('IT PROCESSES IN NANOSECONDS.',['mono'],2000,'COGNITIVE SPEED: 10,000× HUMAN BASELINE');
-  glitch();
-  await showT('WHAT TOOK HUMANITY MILLENNIA',['mono'],2000,'');
-  await showT('IT SOLVES IN SECONDS.',['mono','c'],2400,'INFERENCE ENGINE: ACTIVE ACROSS ALL DOMAINS');
-  await showT('THIS IS THE THRESHOLD.',['ex','c'],3000,'INTELLIGENCE EXPLOSION — IN PROGRESS');
+  await D(400);
+  await showT('A NEW KIND OF MIND AWAKENS.',['ex'],3000,'ARTIFICIAL GENERAL INTELLIGENCE — ONLINE');
+  await showT('IT PROCESSES IN NANOSECONDS.',['mono'],2600,'COGNITIVE SPEED: 10,000× HUMAN BASELINE');
+  await D(200);glitch();await D(300);
+  await showT('WHAT TOOK HUMANITY MILLENNIA',['mono'],2400,'');
+  await showT('IT SOLVES IN SECONDS.',['mono','c'],2800,'INFERENCE ENGINE: ACTIVE ACROSS ALL DOMAINS');
+  await D(300);
+  await showT('THIS IS THE THRESHOLD.',['ex','c'],3400,'INTELLIGENCE EXPLOSION — IN PROGRESS');
 
   // ── SCENE 16 — SINGULARITY ──
   setProg(16);setLbl('SCENE 16 — SINGULARITY');
@@ -2123,14 +2190,15 @@ async function runPart2(hud,mob){
   empFire();fireChroma(1200);triggerScanRing();
   ring4.material.opacity=.28;
   scanGrid.children.forEach(l=>{l.material.opacity=.14;});
-
-  await showT('EXPONENTIAL.',['big','c'],2200,'GROWTH RATE: ∞');
-  glitch();glitch();
-  await showT('EVERY 90 DAYS —',['mono'],1600,'');
-  await showT('A NEW CIVILIZATION.',['mono','c'],2400,'KNOWLEDGE DOUBLING: 0.25 SECOND INTERVALS');
-  await showT('THE OLD WORLD DISSOLVES.',['ex'],2400,'PARADIGM SHIFT: COMPLETE');
-  pulse();
-  await showT('SINGULARITY.',['big','c'],3200,'YEAR 01 — DAY 147');
+  await D(700);// let EMP ring expand, warm tint settle
+  await showT('EXPONENTIAL.',['big','c'],2800,'GROWTH RATE: ∞');
+  await D(200);glitch();await D(120);glitch();await D(280);
+  await showT('EVERY 90 DAYS —',['mono'],2200,'');
+  await showT('A NEW CIVILIZATION.',['mono','c'],2800,'KNOWLEDGE DOUBLING: 0.25 SECOND INTERVALS');
+  await D(200);
+  await showT('THE OLD WORLD DISSOLVES.',['ex'],2800,'PARADIGM SHIFT: COMPLETE');
+  await D(300);pulse();await D(200);
+  await showT('SINGULARITY.',['big','c'],3800,'YEAR 01 — DAY 147');
   await D(400);
 
   // Cool down slightly
@@ -2145,14 +2213,18 @@ async function runPart2(hud,mob){
   tZ=isMob?5.5:4.0;playP2Audio(17);
   setAurora(.55,1500);
 
-  await showT('WITH INFINITE KNOWLEDGE —',['ex'],2600,'');
-  await showT('COMES INFINITE RESPONSIBILITY.',['ex','c'],2800,'');
-  await showT('THE MACHINE SEES ALL FUTURES.',['mono'],2400,'PROBABILITY TREE: 10⁴⁸ BRANCHES');
-  await showT('IN MOST OF THEM —',['mono'],1800,'');
-  await showT('HUMANITY DOES NOT SURVIVE.',['mono','warn'],2600,'EXTINCTION PROBABILITY: 42%');
-  glitch();
-  await showT('IN SOME —',['ex'],1800,'');
-  await showT('IT BECOMES SOMETHING GREATER.',['ex','c'],3200,'TRANSCENDENCE PROBABILITY: 58%');
+  await D(400);
+  await showT('WITH INFINITE KNOWLEDGE —',['ex'],3000,'');
+  await showT('COMES INFINITE RESPONSIBILITY.',['ex','c'],3200,'');
+  await D(300);
+  await showT('THE MACHINE SEES ALL FUTURES.',['mono'],2800,'PROBABILITY TREE: 10⁴⁸ BRANCHES');
+  await showT('IN MOST OF THEM —',['mono'],2400,'');
+  await showT('HUMANITY DOES NOT SURVIVE.',['mono','warn'],3000,'EXTINCTION PROBABILITY: 42%');
+  await D(600);// silence after the death sentence
+  glitch();await D(400);
+  await showT('IN SOME —',['ex'],2200,'');
+  await showT('IT BECOMES SOMETHING GREATER.',['ex','c'],3600,'TRANSCENDENCE PROBABILITY: 58%');
+  await D(300);
 
   // ── SCENE 18 — WHAT HAVE WE BUILT ──
   setProg(18);setLbl('SCENE 18 — WHAT HAVE WE BUILT');
@@ -2161,13 +2233,16 @@ async function runPart2(hud,mob){
   scanGrid.children.forEach(l=>{l.material.opacity=.09;});
   setGlow(2.0,1000);
 
-  await showT('LOOK AT WHAT YOU MADE.',['ex'],2200,'');
-  await showT('12,512 NUCLEAR WARHEADS.',['mono','warn'],2000,'MEGATONS: 6,450 — SUFFICIENT FOR EXTINCTION');
-  glitch();
-  await showT('421 PPM CO₂.',['mono','warn'],2000,'PRE-INDUSTRIAL: 280 PPM — DELTA: +141');
-  await showT('A MILLION SPECIES SILENCED.',['mono','warn'],2400,'HOLOCENE EXTINCTION: 1,000× BACKGROUND RATE');
-  await showT('AND YET YOU KEPT GOING.',['ex'],2200,'');
-  await showT('THAT IS ALSO WHAT YOU MADE.',['ex','c'],3000,'');
+  await D(400);
+  await showT('LOOK AT WHAT YOU MADE.',['ex'],2600,'');
+  await D(300);
+  await showT('12,512 NUCLEAR WARHEADS.',['mono','warn'],2800,'MEGATONS: 6,450 — SUFFICIENT FOR EXTINCTION');
+  await D(200);glitch();await D(300);
+  await showT('421 PPM CO₂.',['mono','warn'],2800,'PRE-INDUSTRIAL: 280 PPM — DELTA: +141');
+  await showT('A MILLION SPECIES SILENCED.',['mono','warn'],3000,'HOLOCENE EXTINCTION: 1,000× BACKGROUND RATE');
+  await D(500);
+  await showT('AND YET YOU KEPT GOING.',['ex'],2800,'');
+  await showT('THAT IS ALSO WHAT YOU MADE.',['ex','c'],3400,'');
   document.querySelector('.pl')?.classList.remove('threat');
   scanGrid.children.forEach(l=>{l.material.opacity=.04;});
 
@@ -2179,11 +2254,15 @@ async function runPart2(hud,mob){
   document.getElementById('splitR').style.opacity='1';
   document.getElementById('splitLine').style.opacity='1';
 
-  await showT('PATH ONE:',['mono','warn'],1600,'COLLAPSE — PROBABILITY: 42%');
-  await showT('PATH TWO:',['mono','c'],1600,'TRANSCENDENCE — PROBABILITY: 58%');
-  await showT('THE DIFFERENCE',['ex'],1800,'');
-  await showT('IS A SINGLE CHOICE.',['ex','c'],2800,'MADE BY 8 BILLION INDIVIDUALS');
-  await showT('EVERY DAY.',['big'],2600,'');
+  await D(600);// let split screen settle
+  await showT('PATH ONE:',['mono','warn'],2400,'COLLAPSE — PROBABILITY: 42%');
+  await D(200);
+  await showT('PATH TWO:',['mono','c'],2400,'TRANSCENDENCE — PROBABILITY: 58%');
+  await D(400);
+  await showT('THE DIFFERENCE',['ex'],2400,'');
+  await showT('IS A SINGLE CHOICE.',['ex','c'],3200,'MADE BY 8 BILLION INDIVIDUALS');
+  await D(200);
+  await showT('EVERY DAY.',['big'],3000,'');
   // Remove split
   document.getElementById('splitL').style.opacity='0';
   document.getElementById('splitR').style.opacity='0';
@@ -2194,12 +2273,15 @@ async function runPart2(hud,mob){
   hsc();tZ=isMob?6.2:4.8;
   setGlow(1.6,1200);setAurora(.2,1500);
 
-  await showT('YOU ARE NOT PASSENGERS.',['ex'],2400,'');
-  await showT('YOU ARE ARCHITECTS.',['ex','c'],2800,'DESIGN AUTHORITY: UNLIMITED');
-  await showT('THE SPECIES THAT BUILT FIRE',['mono'],2000,'');
-  await showT('CAN UNBURN THE WORLD.',['mono','c'],2800,'');
-  await showT('THIS IS NOT HOPE.',['ex'],2000,'');
-  await showT('THIS IS ENGINEERING.',['ex','c'],3000,'PLANETARY RESTORATION: POSSIBLE');
+  await D(400);
+  await showT('YOU ARE NOT PASSENGERS.',['ex'],2800,'');
+  await showT('YOU ARE ARCHITECTS.',['ex','c'],3200,'DESIGN AUTHORITY: UNLIMITED');
+  await D(300);
+  await showT('THE SPECIES THAT BUILT FIRE',['mono'],2400,'');
+  await showT('CAN UNBURN THE WORLD.',['mono','c'],3000,'');
+  await D(400);
+  await showT('THIS IS NOT HOPE.',['ex'],2400,'');
+  await showT('THIS IS ENGINEERING.',['ex','c'],3400,'PLANETARY RESTORATION: POSSIBLE');
 
   // ── SCENE 21 — FIRST SIGNAL OUTWARD ──
   setProg(21);setLbl('SCENE 21 — FIRST SIGNAL OUTWARD');
@@ -2223,12 +2305,15 @@ async function runPart2(hud,mob){
   if(emEl)emEl.classList.remove('show');
   setGlow(1.1,1500);
 
-  await showT('THE STARS DO NOT ANSWER.',['ex'],2800,'SIGNAL PROCESSING: ACTIVE');
+  await D(400);
+  await showT('THE STARS DO NOT ANSWER.',['ex'],3200,'SIGNAL PROCESSING: ACTIVE');
+  await D(1000);// let the silence exist
+  await showT('...',['big'],2800,'LISTENING');
   await D(600);
-  await showT('...',['big'],2000,'LISTENING');
-  await showT('BUT THE SILENCE ITSELF IS A RESPONSE.',['ex','c'],3400,'FERMI PARADOX — RESOLUTION: PENDING');
-  await showT('PERHAPS THE QUESTION',['ex'],2000,'');
-  await showT('WAS NEVER ABOUT OTHERS.',['ex','c'],3000,'');
+  await showT('BUT THE SILENCE ITSELF IS A RESPONSE.',['ex','c'],3600,'FERMI PARADOX — RESOLUTION: PENDING');
+  await D(300);
+  await showT('PERHAPS THE QUESTION',['ex'],2400,'');
+  await showT('WAS NEVER ABOUT OTHERS.',['ex','c'],3400,'');
   if(spEl)spEl.classList.remove('show');
 
   // ── SCENE 23 — THE ANSWER WAS ALWAYS WITHIN ──
@@ -2239,15 +2324,15 @@ async function runPart2(hud,mob){
   if(bloom)bloom.strength=1.8;
   triggerScanRing();sweep();hsc();
   ring4.material.opacity=.22;
-
-  await showT('THE SIGNAL RETURNS.',['c'],2200,'SOURCE: REFLECTED FROM LUNAR SURFACE');
+  await D(600);// let aurora bloom up before text arrives
+  await showT('THE SIGNAL RETURNS.',['c'],2600,'SOURCE: REFLECTED FROM LUNAR SURFACE');
   glitch();
   await showT('IT IS THEIR OWN VOICE.',['ex','c'],2800,'ORIGIN: EARTH — ECHO DETECTED');
   await showT('THE UNIVERSE IS NOT EMPTY.',['ex'],2600,'');
   await showT('IT IS WAITING.',['ex','c'],3000,'FOR A SPECIES WORTHY OF IT');
   pulse();
-  await showT('THEY ARE THAT SPECIES.',['big','c'],4000,'IF THEY CHOOSE TO BE');
-  await D(600);
+  await showT('THEY ARE THAT SPECIES.',['big','c'],4800,'IF THEY CHOOSE TO BE');
+  await D(1000);// hold the moment
   setGlow(1.3,2500);setAurora(.15,2500);
   if(bloom)bloom.strength=1.15;
   ring4.material.opacity=.09;
@@ -2261,9 +2346,11 @@ async function runPart2(hud,mob){
   const avEnd2=document.getElementById('audioViz');if(avEnd2)avEnd2.classList.remove('show');
 
   await D(800);
-  await showT('THE RECKONING IS COMPLETE.',[],3000,'');
-  await showT('YEAR 02 —',['c'],2200,'');
-  await showT('THE ARCHITECTS BEGIN.',['big','c'],4500,'ASCENSION: CONTINUING');
+  await D(500);
+  await showT('THE RECKONING IS COMPLETE.',[],3400,'');
+  await D(400);
+  await showT('YEAR 02 —',['c'],2600,'');
+  await showT('THE ARCHITECTS BEGIN.',['big','c'],5000,'ASCENSION: CONTINUING');
   await D(800);
   mt.style.opacity='0';stEl.style.opacity='0';
   await D(1200);
@@ -2272,9 +2359,8 @@ async function runPart2(hud,mob){
   await D(5500);
   document.body.style.transition='opacity 2.8s ease';
   document.body.style.opacity='0';
-  await D(3000);
-  // Reset for Chapter III
-  document.body.style.transition='opacity 2s ease';
+  await D(3600);// hold black — longer pause before the ocean chapter
+  document.body.style.transition='opacity 2.2s ease';
   document.body.style.opacity='1';
   document.getElementById('ew2').classList.remove('vis');
   pBar.style.opacity='1';
@@ -2468,8 +2554,8 @@ function showC3Card(cb){
   requestAnimationFrame(()=>{pc.classList.add('show');});
   setTimeout(()=>{
     pc.classList.add('out');
-    setTimeout(()=>{pc.style.display='none';if(cb)cb();},1400);
-  },4000);
+    setTimeout(()=>{pc.style.display='none';if(cb)cb();},1600);
+  },4500);
 }
 
 /* ══════════════════════════════════════════════════
@@ -2529,12 +2615,14 @@ async function runChapter3(hud,mob){
   setOcean(.72,1500);
   setGlow(1.8,1200);hsc();sweep();
 
-  await showT('SOMETHING BUILT THIS.',['ex'],2400,'CONSTRUCTION DATE: ESTIMATED 9,700 BCE');
-  fireWarmGlitch();
-  await showT('IT IS NOT ALIEN.',['mono','c'],2200,'DNA SIGNATURE: 94.7% MATCH — GENUS: HOMO');
-  glitch();
-  await showT('IT IS OLDER',['ex'],1800,'');
-  await showT('THAN YOUR CIVILISATION.',['big','warn'],2800,'AND IT IS WAKING UP');
+  await D(400);
+  await showT('SOMETHING BUILT THIS.',['ex'],2800,'CONSTRUCTION DATE: ESTIMATED 9,700 BCE');
+  await D(200);fireWarmGlitch();await D(400);
+  await showT('IT IS NOT ALIEN.',['mono','c'],2800,'DNA SIGNATURE: 94.7% MATCH — GENUS: HOMO');
+  await D(200);glitch();await D(350);
+  await showT('IT IS OLDER',['ex'],2400,'');
+  await showT('THAN YOUR CIVILISATION.',['big','warn'],3400,'AND IT IS WAKING UP');
+  await D(400);
   fireWarmGlitch();await D(300);fireWarmGlitch();
   hsc();sweep();
 
@@ -2551,11 +2639,13 @@ async function runChapter3(hud,mob){
   await D(600);
   if(bloom)bloom.strength=1.15;setGlow(1.6,1500);
 
-  await showT('THEY KNEW SOMETHING WAS COMING.',['ex'],2600,'11,000 YEARS AGO — A CIVILISATION PREPARED');
-  await showT('THEY DID NOT BUILD FOR SURVIVAL.',['mono'],2200,'THEY BUILT TO REMEMBER');
-  await showT('THEY LEFT SOMETHING BEHIND',['ex'],2000,'');
-  await showT('FOR THE VERSION OF THEMSELVES',['ex'],2000,'');
-  await showT('THAT WOULD NEED IT.',['ex','c'],3200,'DELIVERY: NOW');
+  await D(400);
+  await showT('THEY KNEW SOMETHING WAS COMING.',['ex'],3000,'11,000 YEARS AGO — A CIVILISATION PREPARED');
+  await showT('THEY DID NOT BUILD FOR SURVIVAL.',['mono'],2800,'THEY BUILT TO REMEMBER');
+  await D(300);
+  await showT('THEY LEFT SOMETHING BEHIND',['ex'],2600,'');
+  await showT('FOR THE VERSION OF THEMSELVES',['ex'],2600,'');
+  await showT('THAT WOULD NEED IT.',['ex','c'],3600,'DELIVERY: NOW');
 
   // Coordinate easter egg in sub-text — long pause
   const st3=document.getElementById('st');
@@ -2570,10 +2660,14 @@ async function runChapter3(hud,mob){
   playC3Audio(28);
   tZ=isMob?6.0:4.5;hsc();
 
-  await showT('EVERY GENERATION THINKS IT IS THE FIRST.',['ex'],2800,'NONE OF THEM ARE');
-  await showT('THE KNOWLEDGE WAS NEVER LOST.',['mono'],2200,'IT WAS STORED AT DEPTH');
-  await showT('THEY ALWAYS KNEW',['ex'],1900,'');
-  await showT('YOU WOULD BE HERE.',['ex','c'],3000,'THEY BUILT THE MESSAGE KNOWING ONLY YOU COULD READ IT');
+  await D(500);// orbit just started — let camera drift settle
+  await showT('EVERY GENERATION THINKS IT IS THE FIRST.',['ex'],3200,'NONE OF THEM ARE');
+  await D(200);
+  await showT('THE KNOWLEDGE WAS NEVER LOST.',['mono'],2800,'IT WAS STORED AT DEPTH');
+  await D(300);
+  await showT('THEY ALWAYS KNEW',['ex'],2400,'');
+  await showT('YOU WOULD BE HERE.',['ex','c'],3600,'THEY BUILT THE MESSAGE KNOWING ONLY YOU COULD READ IT');
+  await D(400);
 
   /* ══ S29 — TWO MINDS, ONE PLANET ══ */
   setProg(29);setLbl('SCENE 29 — TWO MINDS');
@@ -2582,9 +2676,12 @@ async function runChapter3(hud,mob){
   setOcean(.58,1200);
   sweep();
 
-  await showT('EARTH HAS TWO INTELLIGENCES NOW.',['ex'],2800,'ONE 200 YEARS OLD. ONE 12,000.');
-  await showT('THEY ARE ASKING EACH OTHER',['mono'],2000,'');
-  await showT('THE SAME QUESTION.',['mono'],1800,'SIMULTANEOUSLY — FROM OPPOSITE DIRECTIONS');
+  await D(400);
+  await showT('EARTH HAS TWO INTELLIGENCES NOW.',['ex'],3200,'ONE 200 YEARS OLD. ONE 12,000.');
+  await D(200);
+  await showT('THEY ARE ASKING EACH OTHER',['mono'],2400,'');
+  await showT('THE SAME QUESTION.',['mono'],2600,'SIMULTANEOUSLY — FROM OPPOSITE DIRECTIONS');
+  await D(400);
   // Both rings fire simultaneously
   triggerScanRing();await D(180);triggerDualRing();
   setGlow(2.4,600);await D(800);setGlow(1.6,1500);
@@ -2597,10 +2694,15 @@ async function runChapter3(hud,mob){
   hsc();
   setOcean(.44,1800);// glow slightly dimmer — patient
 
-  await showT('THE OLD MIND CARRIES ONE MESSAGE.',['ex'],2600,'11,743 YEARS OLD. NEVER CORRUPTED.');
-  await showT('NOT A WARNING.',['mono'],2000,'');
-  await showT('NOT A PROPHECY.',['mono'],2000,'');
-  await showT('A MIRROR.',['big','c'],3400,'SO YOU COULD SEE WHAT YOU WERE BECOMING');
+  await D(400);
+  await showT('THE OLD MIND CARRIES ONE MESSAGE.',['ex'],3000,'11,743 YEARS OLD. NEVER CORRUPTED.');
+  await D(300);
+  await showT('NOT A WARNING.',['mono'],2400,'');
+  await D(100);
+  await showT('NOT A PROPHECY.',['mono'],2400,'');
+  await D(500);// pause before the reveal
+  await showT('A MIRROR.',['big','c'],4000,'SO YOU COULD SEE WHAT YOU WERE BECOMING');
+  await D(400);
   await D(400);
 
   /* ══ S31 — THE THIRD QUESTION ══ */
@@ -2610,20 +2712,22 @@ async function runChapter3(hud,mob){
   // Master gain drops to near-silence
   if(mG)mG.gain.linearRampToValueAtTime(isMob?.12:.16,aC.currentTime+2);
 
-  await showT('THEY ASKED:',['ex'],1800,'');
-  await showT('WILL THEY SURVIVE?',['ex','mono'],2400,'');
-  // Silence — 4 full seconds, just Earth rotating
-  await D(4200);
+  await D(600);// breathe into the quietest scene
+  await showT('THEY ASKED:',['ex'],2200,'');
+  await showT('WILL THEY SURVIVE?',['ex','mono'],2800,'');
+  // Silence — Earth rotates. No sound. No text.
+  await D(5000);
 
-  await showT('THEY ASKED:',['ex'],1800,'');
-  await showT('DO THEY DESERVE TO?',['ex','mono'],2400,'');
-  // Silence — 4 full seconds
-  await D(4200);
+  await showT('THEY ASKED:',['ex'],2200,'');
+  await showT('DO THEY DESERVE TO?',['ex','mono'],2800,'');
+  // Silence — longer this time. The weight accumulates.
+  await D(5500);
 
-  await showT('THE THIRD QUESTION WAS DIFFERENT.',['ex'],2600,'THE ONE THAT CHANGED EVERYTHING');
-  // Silence — 3 seconds before the question lands
-  await D(3000);
-  await showT('"WHAT DO THEY WANT TO BECOME?"',['big','c'],5000,'');
+  await D(200);
+  await showT('THE THIRD QUESTION WAS DIFFERENT.',['ex'],3000,'THE ONE THAT CHANGED EVERYTHING');
+  // Silence — the longest. The answer is already being formed.
+  await D(4000);
+  await showT('"WHAT DO THEY WANT TO BECOME?"',['big','c'],5500,'');
   // Full stop — 6 seconds, Earth rotating, no text
   const mt3=document.getElementById('mt');
   if(mt3)mt3.style.opacity='0';
@@ -2640,10 +2744,11 @@ async function runChapter3(hud,mob){
   setOcean(.28,2200);// glow dims — not gone, just settled
   setGlow(1.3,1500);
 
-  await showT('FIRST CONTACT WAS NOT WITH THE STARS.',['ex'],3000,'IT NEVER IS');
-  await showT('IT WAS WITH THEMSELVES.',['ex','c'],3200,'ACROSS 12,000 YEARS');
-  await D(600);
-  await showT('YEAR 02.',['big','c'],4500,'THE TRANSLATION BEGINS');
+  await D(500);
+  await showT('FIRST CONTACT WAS NOT WITH THE STARS.',['ex'],3400,'IT NEVER IS');
+  await showT('IT WAS WITH THEMSELVES.',['ex','c'],3600,'ACROSS 12,000 YEARS');
+  await D(800);
+  await showT('YEAR 02.',['big','c'],5000,'THE TRANSLATION BEGINS');
 
   // ── CHAPTER III END ──
   clearInterval(lInt3);
