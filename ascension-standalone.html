@@ -460,6 +460,151 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 @keyframes spA{
   0%{transform:translate(-50%,-50%) scale(0.25);opacity:.9;}
   100%{transform:translate(-50%,-50%) scale(9);opacity:0;}}
+
+/* ═══════════════════════════════════════════
+   CHAPTER III — THE SIGNAL BENEATH
+═══════════════════════════════════════════ */
+
+/* ─ DEEP OCEAN GLOW ─ */
+#deepGlow{
+  position:fixed;z-index:3;pointer-events:none;
+  /* mid-Atlantic region: roughly center-left of screen */
+  width:340px;height:220px;
+  top:50%;left:38%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(ellipse at 48% 52%,
+    rgba(0,210,160,.28) 0%,
+    rgba(0,160,200,.16) 30%,
+    rgba(0,100,180,.07) 60%,
+    transparent 80%);
+  opacity:0;
+  transition:opacity 2.4s ease;
+  mix-blend-mode:screen;
+  animation:dgBreath 6s ease-in-out infinite;
+}
+#deepGlow.show{opacity:1;}
+@keyframes dgBreath{
+  0%,100%{transform:translate(-50%,-50%) scale(1);}
+  50%{transform:translate(-50%,-50%) scale(1.08);}
+}
+/* geometric structure lines within the glow */
+#deepGlow::before{
+  content:'';position:absolute;inset:20%;
+  border:1px solid rgba(0,200,160,.12);
+  border-radius:50%;
+  animation:dgSpin 22s linear infinite;
+}
+#deepGlow::after{
+  content:'';position:absolute;inset:35%;
+  border:1px solid rgba(0,180,220,.09);
+  border-radius:50%;
+  animation:dgSpin 14s linear infinite reverse;
+}
+@keyframes dgSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ─ DUAL SCAN RING (fires upward from ocean floor) ─ */
+#dualRing{
+  position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .4s;
+}
+#dualRing.on{opacity:1;animation:drFade .8s ease-out forwards;}
+@keyframes drFade{0%{opacity:1}100%{opacity:0}}
+
+/* ─ WARM GLITCH OVERLAY (gold-green, distinct from cyan) ─ */
+#glitchWarm{
+  position:fixed;inset:0;z-index:6;pointer-events:none;opacity:0;
+  mix-blend-mode:screen;
+}
+#glitchWarm.on{animation:gwA .55s steps(1) forwards;}
+@keyframes gwA{
+  0%  {opacity:0;}
+  10% {opacity:1;background:rgba(180,120,0,.06);transform:translate(3px,0);}
+  25% {background:rgba(80,160,20,.05);transform:translate(-3px,1px);}
+  40% {opacity:.7;background:rgba(200,140,0,.08);transform:translate(2px,-2px);}
+  60% {opacity:.4;background:rgba(0,160,80,.04);transform:translate(-1px,1px);}
+  80% {opacity:.2;transform:translate(0);}
+  100%{opacity:0;}
+}
+
+/* ─ SECOND BIO SIGNAL INDICATOR (HUD panel tag) ─ */
+#signal2Tag{
+  font-family:'Share Tech Mono',monospace;
+  font-size:.52rem;letter-spacing:.18em;
+  color:rgba(0,210,160,.55);
+  text-shadow:0 0 6px rgba(0,200,160,.4);
+  margin-top:3px;
+}
+.ancient{color:rgba(0,210,160,.7)!important;text-shadow:0 0 6px rgba(0,200,160,.5)!important;}
+
+/* ─ CHAPTER III PART CARD VARIANT ─ */
+#partCard3{
+  position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;background:#000;pointer-events:none;
+  opacity:0;transition:opacity 1.4s ease;
+}
+#partCard3.show{opacity:1;}
+#partCard3.out{opacity:0;}
+#pc3Part{
+  font-family:'Share Tech Mono',monospace;font-size:clamp(.52rem,1.4vw,.72rem);
+  letter-spacing:.55em;color:rgba(0,210,160,.5);margin-bottom:10px;
+  animation:iF 2s .1s ease both;
+}
+#pc3Title{
+  font-family:'Orbitron',sans-serif;font-size:clamp(1.4rem,5vw,3.6rem);font-weight:900;
+  letter-spacing:clamp(.1em,.2em,.22em);
+  color:#00d4a0;
+  text-shadow:0 0 32px rgba(0,212,160,.6),0 0 80px rgba(0,180,140,.2);
+  animation:iF 2.4s .3s ease both;opacity:0;
+}
+#pc3Sub{
+  font-family:'Exo 2',sans-serif;font-style:italic;font-weight:400;
+  font-size:clamp(.5rem,1.4vw,.78rem);letter-spacing:.22em;
+  color:rgba(255,255,255,.22);margin-top:14px;
+  animation:iF 2.8s .6s ease both;opacity:0;
+}
+
+/* ─ CHAPTER III END CARD ─ */
+#ew3{
+  position:fixed;bottom:13vh;left:50%;transform:translateX(-50%);
+  text-align:center;opacity:0;transition:opacity 3s;z-index:12;min-width:240px;
+}
+#ew3a{
+  font-family:'Orbitron',sans-serif;font-size:clamp(.6rem,1.8vw,1rem);
+  letter-spacing:clamp(.3em,.5em,.6em);color:rgba(0,210,160,.55);
+}
+#ew3b{
+  font-family:'Exo 2',sans-serif;font-weight:300;font-style:italic;
+  font-size:clamp(.48rem,1.1vw,.68rem);letter-spacing:.22em;
+  color:rgba(255,255,255,.2);margin-top:5px;
+}
+#ew3c{
+  font-family:'Share Tech Mono',monospace;font-size:clamp(.38rem,.8vw,.5rem);
+  letter-spacing:.35em;color:rgba(0,210,160,.22);margin-top:10px;
+}
+#ew3.vis{opacity:1;}
+
+/* ─ TICKER CH3 ─ */
+.ticker-ancient{color:rgba(0,210,160,.28)!important;}
+
+/* ─ ARCHIVED HUD TAG ─ */
+.archived-tag{
+  display:inline-block;
+  font-size:.44rem;letter-spacing:.12em;
+  color:rgba(0,210,160,.4);
+  border:1px solid rgba(0,210,160,.15);
+  padding:1px 5px;margin-left:4px;
+  vertical-align:middle;
+}
+
+/* ─ ATMOSPHERE OCEAN PULSE (CSS-side) ─ */
+#oceanPulse{
+  position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity 1.6s;
+  background:radial-gradient(ellipse at 40% 52%,
+    rgba(0,180,140,.06) 0%,rgba(0,130,160,.03) 45%,transparent 70%);
+  mix-blend-mode:screen;
+}
+#oceanPulse.show{opacity:1;}
+
 </style>
 </head>
 <body>
@@ -491,6 +636,21 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   <div id="ew2a">YEAR 01 : CHAPTER II COMPLETE</div>
   <div id="ew2b">the reckoning — processed</div>
   <div id="ew2c">year 02 transmission : incoming</div>
+</div>
+<!-- ═══ CHAPTER III ELEMENTS ═══ -->
+<div id="partCard3">
+  <div id="pc3Part">ASCENSION — YEAR 02</div>
+  <div id="pc3Title">CHAPTER III</div>
+  <div id="pc3Sub">THE SIGNAL BENEATH</div>
+</div>
+<div id="deepGlow"></div>
+<div id="oceanPulse"></div>
+<div id="dualRing"></div>
+<div id="glitchWarm"></div>
+<div id="ew3">
+  <div id="ew3a">CHAPTER III : THE SIGNAL BENEATH</div>
+  <div id="ew3b">the translation begins</div>
+  <div id="ew3c">year 02 — archive integrity: 94.2%</div>
 </div>
 <div id="audioViz">
   <div class="avB" style="--h:8px"></div><div class="avB" style="--h:14px"></div>
@@ -948,11 +1108,18 @@ void main(){
   float aStr=pole*uAurora*rim*(0.9+sin(uTime*1.1+vNormal.x*4.)*.1);
   col=mix(col,aCol,aStr*.7);
   float aAlpha=rim*.42*uGlow + aStr*.3;
-  gl_FragColor=vec4(col*glow + aCol*aStr*.18, aAlpha);
+  // ── Deep ocean signal glow (Chapter III+) ──
+  float oceanLat=pow(1.-abs(vNormal.y+.12)*.85,4.);// centred slightly south of equator
+  float oceanLon=pow(max(0.,-.vNormal.x*.6+.4),2.);// mid-Atlantic-ish hemisphere
+  vec3 oceanCol=vec3(.0,.72,.58);
+  float oceanStr=oceanLat*oceanLon*uOcean;
+  col=mix(col,oceanCol,oceanStr*.55);
+  float aAlpha=rim*.42*uGlow + aStr*.3 + oceanStr*.22;
+  gl_FragColor=vec4(col*glow + aCol*aStr*.18 + oceanCol*oceanStr*.12, aAlpha);
 }`;
 
 const atmMat=new THREE.ShaderMaterial({
-  uniforms:{uTime:{value:0},uGlow:{value:1.3},uPulse:{value:0},uAurora:{value:0.0}},
+  uniforms:{uTime:{value:0},uGlow:{value:1.3},uPulse:{value:0},uAurora:{value:0.0},uOcean:{value:0.0}},
   vertexShader:atmVS,fragmentShader:atmFS,
   transparent:true,side:THREE.BackSide,depthWrite:false
 });
@@ -1669,7 +1836,7 @@ const sn=document.getElementById('sn');
 const pFill=document.getElementById('pFill');
 const pBar=document.getElementById('pBar');
 const D=ms=>new Promise(r=>setTimeout(r,ms));
-const TOTAL=24;let scN=0;
+const TOTAL=36;let scN=0;
 
 function setProg(n){
   scN=n;pBar.classList.add('show');
@@ -2103,6 +2270,395 @@ async function runPart2(hud,mob){
   document.getElementById('ew2').classList.add('vis');
   pBar.style.opacity='0';
   await D(5500);
+  document.body.style.transition='opacity 2.8s ease';
+  document.body.style.opacity='0';
+  await D(3000);
+  // Reset for Chapter III
+  document.body.style.transition='opacity 2s ease';
+  document.body.style.opacity='1';
+  document.getElementById('ew2').classList.remove('vis');
+  pBar.style.opacity='1';
+  ticker.classList.remove('show');
+  if(bloom)bloom.strength=1.15;setGlow(1.3);setAurora(.1,1000);setOcean(0);
+  tZ=isMob?9:7.5;
+  await D(600);
+  await runChapter3(hud,mob);
+}
+
+/* ══════════════════════════════════════════════════
+   CHAPTER III INFRASTRUCTURE
+══════════════════════════════════════════════════ */
+
+/* ─ CAMERA ORBIT SYSTEM ─ */
+let camOrbit=false,camOrbitAngle=0,camOrbitSpeed=0.00032,camOrbitR=0.28;
+function startOrbit(speed=0.00032,r=0.28){camOrbit=true;camOrbitSpeed=speed;camOrbitR=r;}
+function stopOrbit(){camOrbit=false;}
+
+/* ─ DEEP OCEAN SIGNAL ─ */
+let deepGlowAlpha=0,deepGlowTarget=0;
+let signal2Active=false,signal2Ph=0;
+function setOcean(v,dur=1800){
+  const start=atmMat.uniforms.uOcean.value,t0=Date.now();
+  deepGlowTarget=v;
+  const step=()=>{const p=Math.min(1,(Date.now()-t0)/dur);
+    atmMat.uniforms.uOcean.value=start+(v-start)*p;
+    deepGlowAlpha=start+(v-start)*p;
+    if(p<1)requestAnimationFrame(step);};step();
+  const dg=document.getElementById('deepGlow');
+  const op=document.getElementById('oceanPulse');
+  if(dg)dg.classList.toggle('show',v>0.05);
+  if(op)op.classList.toggle('show',v>0.1);
+}
+
+/* ─ WARM GLITCH (gold-green) ─ */
+function fireWarmGlitch(){
+  const g=document.getElementById('glitchWarm');
+  if(!g)return;
+  g.classList.remove('on');void g.offsetWidth;g.classList.add('on');
+  setTimeout(()=>g.classList.remove('on'),560);
+}
+
+/* ─ DUAL SCAN RING (upward, from ocean floor) ─ */
+let dualRingAlpha=0,dualRingR=0,dualRingActive=false;
+function triggerDualRing(){dualRingActive=true;dualRingAlpha=1;dualRingR=0;}
+function drawDualRing(){
+  // Draw on the overlayCanvas — upward expanding ring (bottom of screen origin)
+  if(!dualRingActive&&dualRingAlpha<=0)return;
+  const cx=ovCv.width/2,cy=ovCv.height*.72;// origin lower
+  if(dualRingActive){
+    dualRingR+=2.4;
+    if(dualRingR>Math.max(ovCv.width,ovCv.height)*1.2){dualRingActive=false;dualRingAlpha=0;return;}
+  }
+  dualRingAlpha=Math.max(0,dualRingAlpha-.006);
+  ovCtx.beginPath();
+  ovCtx.arc(cx,cy,dualRingR,0,Math.PI*2);
+  ovCtx.strokeStyle=`rgba(0,210,160,${dualRingAlpha*.32})`;
+  ovCtx.lineWidth=1.2;ovCtx.stroke();
+  ovCtx.beginPath();
+  ovCtx.arc(cx,cy,dualRingR*.55,0,Math.PI*2);
+  ovCtx.strokeStyle=`rgba(0,180,160,${dualRingAlpha*.12})`;
+  ovCtx.lineWidth=.8;ovCtx.stroke();
+}
+
+/* ─ SECOND BIO SIGNAL (ancient, slower) ─ */
+// Injected into drawBio() via flag signal2Active
+function drawSignal2(ctx,w,h){
+  if(!signal2Active)return;
+  ctx.beginPath();
+  for(let x=0;x<w;x++){
+    // Much slower wave — ancient rhythm
+    const y=h*.5+Math.sin(x*.018+signal2Ph)*(h*.28*(0.5+Math.sin(x*.006+signal2Ph*.3)*.5));
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  const gs=ctx.createLinearGradient(0,0,w,0);
+  gs.addColorStop(0,'transparent');
+  gs.addColorStop(.15,'rgba(0,210,160,.35)');
+  gs.addColorStop(.85,'rgba(0,210,160,.35)');
+  gs.addColorStop(1,'transparent');
+  ctx.strokeStyle=gs;ctx.lineWidth=.9;ctx.stroke();
+  signal2Ph+=.006;// 5× slower than human wave
+}
+
+/* ─ CHAPTER III TICKER TEXT ─ */
+const TICKER_C3='ANOMALY DETECTED: MID-ATLANTIC   |   SIGNAL AGE: 11,743 YEARS   |   ARCHIVE INTEGRITY: 94.2%   |   TRANSLATION: IN PROGRESS   |   DUAL INTELLIGENCE: CONFIRMED   |   OCEAN DEPTH: 3,800M   |   FREQUENCY: 0.000073 Hz   |   DNA MATCH: 94.7%   |   MESSAGE TYPE: MIRROR   |   YEAR 02 — THE SIGNAL BENEATH   |   ';
+
+/* ─ CHAPTER III AUDIO ─ */
+let ancientDrone=null,ancientGain=null;// persistent ancient tone
+function playC3Audio(sceneNum){
+  if(!aC||!mG)return;
+  try{
+    if(sceneNum===25){// anomaly — existing drone shifts + new sub-bass
+      // Detune existing drones down a semitone
+      dOscs.forEach(o=>{try{o.frequency.linearRampToValueAtTime(o.frequency.value*.944,aC.currentTime+4);}catch(e){}});
+      // New low anomaly pulse
+      const ab=aC.createOscillator(),ag=aC.createGain();
+      ab.type='sine';ab.frequency.value=18.5;// standing wave frequency
+      ag.gain.setValueAtTime(0,aC.currentTime);ag.gain.linearRampToValueAtTime(.18,aC.currentTime+3);
+      ag.gain.linearRampToValueAtTime(.08,aC.currentTime+12);
+      ab.connect(ag).connect(mG);ab.start();ab.stop(aC.currentTime+16);
+      ancientDrone=ab;ancientGain=ag;}
+
+    if(sceneNum===26){// the sleeper — 18Hz standing wave, glass harmonic
+      // Deep 18Hz pulse (felt not heard)
+      const sw=aC.createOscillator(),sg=aC.createGain();
+      sw.type='sine';sw.frequency.value=18;
+      sg.gain.setValueAtTime(.22,aC.currentTime);sg.gain.linearRampToValueAtTime(.12,aC.currentTime+8);
+      sw.connect(sg).connect(mG);sw.start();sw.stop(aC.currentTime+14);
+      // Glass harmonic shimmer (high partials)
+      [880,1320,1760,2200].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='sine';o.frequency.value=f;
+        // Vibrato LFO
+        const lf=aC.createOscillator(),lg=aC.createGain();
+        lf.frequency.value=4.8+i*.4;lg.gain.value=f*.008;
+        lf.connect(lg);lg.connect(o.frequency);lf.start();
+        g.gain.setValueAtTime(0,aC.currentTime+i*.3);
+        g.gain.linearRampToValueAtTime(.008,aC.currentTime+i*.3+.8);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+8+i);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.3);
+        o.stop(aC.currentTime+9+i);lf.stop(aC.currentTime+9+i);});}
+
+    if(sceneNum===27){// recognition — two drones find brief harmonic
+      // A perfect fifth between the two drone groups
+      [55,82.5].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='sine';o.frequency.value=f;
+        o.detune.value=(i===0?0:2);// tiny detune for warmth
+        g.gain.setValueAtTime(0,aC.currentTime);
+        g.gain.linearRampToValueAtTime(.055,aC.currentTime+2.5);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+6.5);
+        o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+7);});}
+
+    if(sceneNum===28){// inheritance — singing bowl hybrid
+      [174,261,392,523].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='triangle';o.frequency.value=f;
+        // Slow attack like a mallet strike
+        g.gain.setValueAtTime(0,aC.currentTime+i*.4);
+        g.gain.linearRampToValueAtTime(.028,aC.currentTime+i*.4+.35);
+        g.gain.exponentialRampToValueAtTime(.008,aC.currentTime+i*.4+3.5);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+i*.4+6);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.4);o.stop(aC.currentTime+i*.4+6);});}
+
+    if(sceneNum===29){// two minds — dual drone weave
+      [[44,1],[55,.85],[82.5,.7]].forEach(([f,vol],i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='sine';o.frequency.value=f;
+        o.detune.value=(Math.random()-.5)*6;
+        g.gain.setValueAtTime(0,aC.currentTime);
+        g.gain.linearRampToValueAtTime(vol*.06,aC.currentTime+2+i);
+        g.gain.linearRampToValueAtTime(vol*.03,aC.currentTime+10);
+        o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+14);});}
+
+    if(sceneNum===30){// patient sustained chord — no resolution
+      [36,54,81].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='sine';o.frequency.value=f;
+        o.detune.value=(Math.random()-.5)*8;
+        g.gain.setValueAtTime(0,aC.currentTime);
+        g.gain.linearRampToValueAtTime(.09,aC.currentTime+4);
+        g.gain.setValueAtTime(.09,aC.currentTime+9);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+14);
+        o.connect(g).connect(mG);o.start();o.stop(aC.currentTime+15);});}
+
+    if(sceneNum===31){// quietest moment — one high tone + 18Hz only
+      mG.gain.linearRampToValueAtTime(isMob?.18:.22,aC.currentTime+1.5);
+      const ho=aC.createOscillator(),hg=aC.createGain();
+      ho.type='sine';ho.frequency.value=1320;
+      hg.gain.setValueAtTime(0,aC.currentTime);
+      hg.gain.linearRampToValueAtTime(.012,aC.currentTime+2);
+      hg.gain.linearRampToValueAtTime(0,aC.currentTime+18);
+      ho.connect(hg).connect(mG);ho.start();ho.stop(aC.currentTime+19);}
+
+    if(sceneNum===32){// resolution — one clean major chord
+      [130,164,196,261].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='triangle';o.frequency.value=f;
+        g.gain.setValueAtTime(0,aC.currentTime+i*.06);
+        g.gain.linearRampToValueAtTime(.035,aC.currentTime+i*.06+.4);
+        g.gain.linearRampToValueAtTime(.018,aC.currentTime+4);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+8);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.06);o.stop(aC.currentTime+8);});}
+  }catch(e){console.warn('C3 audio:',e);}}
+
+/* ─ SHOW CHAPTER III PART CARD ─ */
+function showC3Card(cb){
+  const pc=document.getElementById('partCard3');
+  if(!pc)return cb&&cb();
+  pc.style.display='flex';
+  requestAnimationFrame(()=>{pc.classList.add('show');});
+  setTimeout(()=>{
+    pc.classList.add('out');
+    setTimeout(()=>{pc.style.display='none';if(cb)cb();},1400);
+  },4000);
+}
+
+/* ══════════════════════════════════════════════════
+   CHAPTER III — SCENES 25–36: THE SIGNAL BENEATH
+══════════════════════════════════════════════════ */
+async function runChapter3(hud,mob){
+  const ticker=document.getElementById('ticker');
+
+  // Switch ticker to Chapter III content
+  const tEl3=document.getElementById('tickInner');
+  if(tEl3)tEl3.innerHTML='<span>'+TICKER_C3.repeat(4)+'</span>';
+
+  // ── CHAPTER TITLE CARD ──
+  await new Promise(res=>{
+    showC3Card(res);
+    tZ=isMob?9.5:7.8;
+    setGlow(1.3);setAurora(.08,1200);
+    if(bloom)bloom.strength=1.15;
+  });
+
+  // Re-show HUD and UI for Chapter III
+  if(hud)hud.classList.add('show');
+  if(mob)mob.classList.add('show');
+  ticker.classList.add('show');
+  const av3=document.getElementById('audioViz');if(av3)av3.classList.add('show');
+
+  // Restore master gain gently
+  if(mG)mG.gain.setValueAtTime(0,aC.currentTime),
+         mG.gain.linearRampToValueAtTime(isMob?.28:.38,aC.currentTime+3);
+
+  const lInt3=setInterval(addLog,2200);
+
+  /* ══ S25 — ANOMALY DETECTED ══ */
+  setProg(25);setLbl('SCENE 25 — ANOMALY DETECTED');
+  sweep();hsc();triggerScanRing();
+  playC3Audio(25);
+  tZ=isMob?8.2:6.8;
+
+  await showT('ANOMALY DETECTED.',['warn'],2000,'SIGNAL ORIGIN: 3,800 METRES BELOW SEA LEVEL');
+  glitch();
+  await showT('DESIGNATION: UNKNOWN.',['mono'],2200,'FREQUENCY: 0.000073 Hz — PERIOD: 3.8 HOURS');
+  await showT('IT HAS BEEN TRANSMITTING',['ex'],2000,'');
+  await showT('11,743 YEARS.',['big','c'],3200,'UNINTERRUPTED — UNCORRUPTED — UNACKNOWLEDGED');
+
+  // Ocean glow appears — slow fade in
+  setOcean(.45,2800);
+  signal2Active=true;// second bio wave now visible in HUD
+  triggerDualRing();
+  sweep();
+
+  await showT('SOMETHING IS DOWN THERE.',['ex','warn'],2800,'');
+
+  /* ══ S26 — THE SLEEPER ══ */
+  setProg(26);setLbl('SCENE 26 — THE SLEEPER');
+  tZ=isMob?4.5:3.2;// closest in animation — pressing against the ocean
+  playC3Audio(26);
+  setOcean(.72,1500);
+  setGlow(1.8,1200);hsc();sweep();
+
+  await showT('SOMETHING BUILT THIS.',['ex'],2400,'CONSTRUCTION DATE: ESTIMATED 9,700 BCE');
+  fireWarmGlitch();
+  await showT('IT IS NOT ALIEN.',['mono','c'],2200,'DNA SIGNATURE: 94.7% MATCH — GENUS: HOMO');
+  glitch();
+  await showT('IT IS OLDER',['ex'],1800,'');
+  await showT('THAN YOUR CIVILISATION.',['big','warn'],2800,'AND IT IS WAKING UP');
+  fireWarmGlitch();await D(300);fireWarmGlitch();
+  hsc();sweep();
+
+  /* ══ S27 — RECOGNITION ══ */
+  setProg(27);setLbl('SCENE 27 — RECOGNITION');
+  tZ=isMob?5.8:4.0;
+  playC3Audio(27);
+  // Both scan rings fire — surface down, floor up — simultaneously
+  triggerScanRing();
+  await D(200);
+  triggerDualRing();
+  setGlow(2.2,800);
+  if(bloom)bloom.strength=1.6;
+  await D(600);
+  if(bloom)bloom.strength=1.15;setGlow(1.6,1500);
+
+  await showT('THEY KNEW SOMETHING WAS COMING.',['ex'],2600,'11,000 YEARS AGO — A CIVILISATION PREPARED');
+  await showT('THEY DID NOT BUILD FOR SURVIVAL.',['mono'],2200,'THEY BUILT TO REMEMBER');
+  await showT('THEY LEFT SOMETHING BEHIND',['ex'],2000,'');
+  await showT('FOR THE VERSION OF THEMSELVES',['ex'],2000,'');
+  await showT('THAT WOULD NEED IT.',['ex','c'],3200,'DELIVERY: NOW');
+
+  // Coordinate easter egg in sub-text — long pause
+  const st3=document.getElementById('st');
+  if(st3){st3.textContent='30.0°N  31.1°E  →  0°N  28.5°W';st3.style.opacity='1';}
+  await D(3800);
+  if(st3)st3.style.opacity='0';
+  await D(800);
+
+  /* ══ S28 — THE INHERITANCE ══ */
+  setProg(28);setLbl('SCENE 28 — THE INHERITANCE');
+  startOrbit(.00028,.22);// camera begins slow lateral drift
+  playC3Audio(28);
+  tZ=isMob?6.0:4.5;hsc();
+
+  await showT('EVERY GENERATION THINKS IT IS THE FIRST.',['ex'],2800,'NONE OF THEM ARE');
+  await showT('THE KNOWLEDGE WAS NEVER LOST.',['mono'],2200,'IT WAS STORED AT DEPTH');
+  await showT('THEY ALWAYS KNEW',['ex'],1900,'');
+  await showT('YOU WOULD BE HERE.',['ex','c'],3000,'THEY BUILT THE MESSAGE KNOWING ONLY YOU COULD READ IT');
+
+  /* ══ S29 — TWO MINDS, ONE PLANET ══ */
+  setProg(29);setLbl('SCENE 29 — TWO MINDS');
+  tZ=isMob?7.8:6.0;// wide — both light patterns visible
+  playC3Audio(29);
+  setOcean(.58,1200);
+  sweep();
+
+  await showT('EARTH HAS TWO INTELLIGENCES NOW.',['ex'],2800,'ONE 200 YEARS OLD. ONE 12,000.');
+  await showT('THEY ARE ASKING EACH OTHER',['mono'],2000,'');
+  await showT('THE SAME QUESTION.',['mono'],1800,'SIMULTANEOUSLY — FROM OPPOSITE DIRECTIONS');
+  // Both rings fire simultaneously
+  triggerScanRing();await D(180);triggerDualRing();
+  setGlow(2.4,600);await D(800);setGlow(1.6,1500);
+  await showT('"ARE WE ALONE?"',['big','c'],4200,'');
+
+  /* ══ S30 — WHAT THE DEEP KNOWS ══ */
+  setProg(30);setLbl('SCENE 30 — WHAT THE DEEP KNOWS');
+  tZ=isMob?6.5:4.8;// drift south — southern ocean
+  playC3Audio(30);
+  hsc();
+  setOcean(.44,1800);// glow slightly dimmer — patient
+
+  await showT('THE OLD MIND CARRIES ONE MESSAGE.',['ex'],2600,'11,743 YEARS OLD. NEVER CORRUPTED.');
+  await showT('NOT A WARNING.',['mono'],2000,'');
+  await showT('NOT A PROPHECY.',['mono'],2000,'');
+  await showT('A MIRROR.',['big','c'],3400,'SO YOU COULD SEE WHAT YOU WERE BECOMING');
+  await D(400);
+
+  /* ══ S31 — THE THIRD QUESTION ══ */
+  setProg(31);setLbl('SCENE 31 — THE THIRD QUESTION');
+  tZ=isMob?6.0:4.2;
+  playC3Audio(31);
+  // Master gain drops to near-silence
+  if(mG)mG.gain.linearRampToValueAtTime(isMob?.12:.16,aC.currentTime+2);
+
+  await showT('THEY ASKED:',['ex'],1800,'');
+  await showT('WILL THEY SURVIVE?',['ex','mono'],2400,'');
+  // Silence — 4 full seconds, just Earth rotating
+  await D(4200);
+
+  await showT('THEY ASKED:',['ex'],1800,'');
+  await showT('DO THEY DESERVE TO?',['ex','mono'],2400,'');
+  // Silence — 4 full seconds
+  await D(4200);
+
+  await showT('THE THIRD QUESTION WAS DIFFERENT.',['ex'],2600,'THE ONE THAT CHANGED EVERYTHING');
+  // Silence — 3 seconds before the question lands
+  await D(3000);
+  await showT('"WHAT DO THEY WANT TO BECOME?"',['big','c'],5000,'');
+  // Full stop — 6 seconds, Earth rotating, no text
+  const mt3=document.getElementById('mt');
+  if(mt3)mt3.style.opacity='0';
+  await D(6200);
+  // Gain restores
+  if(mG)mG.gain.linearRampToValueAtTime(isMob?.3:.4,aC.currentTime+2.5);
+
+  /* ══ S32 — CHAPTER III CLOSE ══ */
+  setProg(32);setLbl('SCENE 32 — CHAPTER III CLOSE');
+  tZ=isMob?8.5:7.0;// pull back — Moon at edge of frame
+  playC3Audio(32);
+  stopOrbit();// camera settles
+  hsc();sweep();
+  setOcean(.28,2200);// glow dims — not gone, just settled
+  setGlow(1.3,1500);
+
+  await showT('FIRST CONTACT WAS NOT WITH THE STARS.',['ex'],3000,'IT NEVER IS');
+  await showT('IT WAS WITH THEMSELVES.',['ex','c'],3200,'ACROSS 12,000 YEARS');
+  await D(600);
+  await showT('YEAR 02.',['big','c'],4500,'THE TRANSLATION BEGINS');
+
+  // ── CHAPTER III END ──
+  clearInterval(lInt3);
+  setProg(36);setLbl('');// jump progress to chapter end
+  tZ=isMob?10:8.2;
+  const mt3e=document.getElementById('mt');if(mt3e)mt3e.style.opacity='0';
+  const st3e=document.getElementById('st');if(st3e)st3e.style.opacity='0';
+  ticker.classList.remove('show');
+  const av3e=document.getElementById('audioViz');if(av3e)av3e.classList.remove('show');
+  signal2Active=false;
+  setOcean(0,3000);
+  await D(1800);
+  document.getElementById('ew3').classList.add('vis');
+  pBar.style.opacity='0';
+  await D(5500);
   document.body.style.transition='opacity 5s ease';
   document.body.style.opacity='0';
 }
@@ -2159,9 +2715,15 @@ function loop(){
   cam.position.z=cZ;
   if(shk){cam.position.x=(Math.random()-.5)*shkS;cam.position.y=(Math.random()-.5)*shkS;}
   else{cam.position.x*=.8;cam.position.y*=.8;}
-  // Slight auto orbit
+  // Slight auto orbit (default)
   cam.position.x+=Math.sin(t*.08)*.004;
   cam.position.y+=Math.cos(t*.06)*.003;
+  // Chapter III+ lateral orbital mode
+  if(camOrbit){
+    camOrbitAngle+=camOrbitSpeed;
+    cam.position.x+=Math.sin(camOrbitAngle)*camOrbitR;
+    cam.position.y+=Math.sin(camOrbitAngle*.38)*camOrbitR*.22;
+  }
   cam.lookAt(0,0,0);
 
   // 2D updates
