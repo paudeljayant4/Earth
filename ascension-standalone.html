@@ -2468,7 +2468,7 @@ async function run(){
   // SCENE 9 — ASCENSION DROP
   setProg(9);setLbl('SCENE 09 — PHASE TRANSITION');
   await D(300);
-  triggerBass();shake(isMob?.22:.3,1500);empFire();fireChroma(1400);triggerScanRing();
+  triggerBass();shake(isMob?.22:.3,1500);empFire();fireChroma(1400);triggerScanRing();triggerPBurst();setCorona(.22,400);
   setTimeout(()=>{const e2=document.getElementById('emp');if(e2){e2.classList.remove('on');void e2.offsetWidth;e2.classList.add('on');}},650);
   const af=document.getElementById('auroraFlash');if(af){af.classList.remove('on');void af.offsetWidth;af.classList.add('on');}
   setAurora(.9,500);
@@ -2485,6 +2485,7 @@ async function run(){
   setGlow(1.3,2000);
   ring4.material.opacity=.09;
   document.getElementById('vig').style.opacity='1';
+  setCorona(0,1800);
   await D(1200);// let the aftermath settle — bloom and glow cooling
 
 
@@ -2610,7 +2611,7 @@ async function runPart2(hud,mob){
   // Cities glow hot — warm tint
   document.getElementById('warmTint').style.opacity='1';
   if(bloom)bloom.strength=2.4;setGlow(3.8,500);
-  empFire();fireChroma(1200);triggerScanRing();
+  empFire();fireChroma(1200);triggerScanRing();triggerPBurst();setCorona(.18,500);
   ring4.material.opacity=.28;
   scanGrid.children.forEach(l=>{l.material.opacity=.14;});
   await D(700);// let EMP ring expand, warm tint settle
@@ -2626,7 +2627,7 @@ async function runPart2(hud,mob){
 
   // Cool down slightly
   document.getElementById('warmTint').style.opacity='0';
-  if(bloom)bloom.strength=1.15;setGlow(1.3,2000);
+  if(bloom)bloom.strength=1.15;setGlow(1.3,2000);setCorona(0,1400);
   scanGrid.children.forEach(l=>{l.material.opacity=.04;});
   stopAiTicker();
   if(ainEl)ainEl.classList.remove('show');
@@ -3194,37 +3195,248 @@ async function runChapter3(hud,mob){
    RENDER LOOP
 ══════════════════════════════════════════════════ */
 let fr=0;
+/* ══════════════════════════════════════════════════
+   CINEMATIC CAMERA & ANIMATION SYSTEM
+══════════════════════════════════════════════════ */
+
+// ── Camera state ──
+let camX=0,camY=0,camTargX=0,camTargY=0;
+let camLookX=0,camLookY=0,camLookZ=0;
+let camLookTX=0,camLookTY=0,camLookTZ=0;
+let camRollTarget=0,camRoll=0;
+let earthRotSpd=.0018,earthRotTarget=.0018;
+let moonVisible=true;
+
+// ── Earth tilt/wobble state ──
+let earthTiltTarget=23.5*(Math.PI/180),earthTiltCur=23.5*(Math.PI/180);
+
+// ── Scene cinematic keyframe data ──
+// Per scene: [camX, camY, earthRotSpeed, earthTiltOffset, moonVisible, glowPulseScale]
+const SCENE_CAM={
+  // Ch1: Identification to Phase Transition
+  1: {rx:.006,ry:.004,erSpd:.0018,lx:0,ly:.02,lz:0},       // default, gentle drift
+  2: {rx:.005,ry:.003,erSpd:.0020,lx:0,ly:-.02,lz:0},      // bio analysis, tilted down
+  3: {rx:.009,ry:.006,erSpd:.0024,lx:0,ly:0,lz:0},         // threat — faster rotation, tension
+  4: {rx:.006,ry:.004,erSpd:.0018,lx:0,ly:.03,lz:0},       // paradox — look up
+  5: {rx:.005,ry:.003,erSpd:.0015,lx:0,ly:-.01,lz:0},      // legacy — slower
+  6: {rx:.008,ry:.005,erSpd:.0022,lx:0,ly:.04,lz:0},       // transformation — rising
+  7: {rx:.006,ry:.004,erSpd:.0018,lx:0,ly:.02,lz:0},       // cycle
+  8: {rx:.012,ry:.008,erSpd:.0028,lx:0,ly:0,lz:0},         // precipice — tension peak
+  9: {rx:.020,ry:.014,erSpd:.0040,lx:0,ly:0,lz:0},         // ascension drop — fast!
+  10:{rx:.007,ry:.005,erSpd:.0014,lx:0,ly:.06,lz:0},       // aurora — look up, slow
+  11:{rx:.004,ry:.003,erSpd:.0012,lx:0,ly:.01,lz:0},       // future — meditative, slowest
+  12:{rx:.005,ry:.004,erSpd:.0014,lx:0,ly:.02,lz:0},       // epilogue — gentle
+  13:{rx:.003,ry:.002,erSpd:.0010,lx:0,ly:0,lz:0},         // interlude — zoom out, very slow
+  // Ch2: The Reckoning
+  14:{rx:.006,ry:.004,erSpd:.0018,lx:0,ly:.02,lz:0},       // transmission begins
+  15:{rx:.008,ry:.005,erSpd:.0022,lx:.04,ly:0,lz:0},       // first mind — slight lateral
+  16:{rx:.018,ry:.012,erSpd:.0036,lx:0,ly:0,lz:0},         // singularity — fast chaos
+  17:{rx:.006,ry:.004,erSpd:.0016,lx:0,ly:.05,lz:0},       // weight of knowledge — up
+  18:{rx:.010,ry:.007,erSpd:.0024,lx:0,ly:-.02,lz:0},      // what we built — darker
+  19:{rx:.007,ry:.005,erSpd:.0019,lx:.05,ly:0,lz:0},       // two paths — lateral
+  20:{rx:.005,ry:.004,erSpd:.0015,lx:0,ly:.04,lz:0},       // architects — hopeful up
+  21:{rx:.006,ry:.004,erSpd:.0017,lx:-.03,ly:.03,lz:0},    // first signal — tilt
+  22:{rx:.003,ry:.002,erSpd:.0012,lx:0,ly:.01,lz:0},       // are we alone — stillness
+  23:{rx:.009,ry:.006,erSpd:.0020,lx:0,ly:.05,lz:0},       // answer — rising
+  24:{rx:.003,ry:.002,erSpd:.0010,lx:0,ly:.01,lz:0},       // year 02 — drift out
+  // Ch3: The Signal Beneath
+  25:{rx:.007,ry:.005,erSpd:.0016,lx:0,ly:-.04,lz:0},      // anomaly — look down
+  26:{rx:.004,ry:.003,erSpd:.0013,lx:0,ly:-.08,lz:0},      // sleeper — deep down
+  27:{rx:.010,ry:.007,erSpd:.0022,lx:.04,ly:-.03,lz:0},    // recognition — dual motion
+  28:{rx:.005,ry:.004,erSpd:.0015,lx:.06,ly:0,lz:0},       // inheritance — slow orbit
+  29:{rx:.007,ry:.005,erSpd:.0018,lx:0,ly:-.02,lz:0},      // two minds
+  30:{rx:.005,ry:.004,erSpd:.0014,lx:-.04,ly:-.04,lz:0},   // what deep knows — south
+  31:{rx:.002,ry:.001,erSpd:.0009,lx:0,ly:.01,lz:0},       // third question — stillest
+  32:{rx:.004,ry:.003,erSpd:.0013,lx:0,ly:.03,lz:0},       // ch3 close — pull back, moon
+};
+
+// Current cinematic params (lerped toward target)
+let cineRX=.006,cineRY=.004,cineERSpd=.0018;
+let cineLX=0,cineLY=.02,cineLZ=0;
+let curScene=1;
+
+function setCineScene(n){
+  curScene=n;
+  const c=SCENE_CAM[n]||SCENE_CAM[1];
+  cineRX=c.rx;cineRY=c.ry;cineERSpd=c.erSpd;
+  cineLX=c.lx;cineLY=c.ly;cineLZ=c.lz;
+  // Bloom
+  const b=_getBloomForScene(n);
+  if(bloom&&Math.abs(bloom.strength-b)>.08){
+    const bs=bloom.strength,t0=Date.now();
+    const bstep=()=>{const p=Math.min(1,(Date.now()-t0)/900);bloom.strength=bs+(b-bs)*p;if(p<1)requestAnimationFrame(bstep);};
+    bstep();
+  }
+  // Moon angular target
+  moonAngTarget=moonAngMap[n]!==undefined?moonAngMap[n]:moonPivot.rotation.y;
+}
+
+// ── Ring visibility targets per chapter ──
+let ringTargetOp=[.26,.10,.04,.09];// ring1..4
+function setRingsForScene(n){
+  if(n>=9&&n<=13){ringTargetOp=[.38,.18,.08,.20];}// ascension
+  else if(n>=14&&n<=16){ringTargetOp=[.30,.14,.06,.20];}// singularity
+  else if(n>=17&&n<=24){ringTargetOp=[.22,.09,.03,.09];}// reflection
+  else if(n>=25){ringTargetOp=[.10,.05,.02,.05];}// ch3 — quiet rings
+  else{ringTargetOp=[.26,.10,.04,.09];}// default
+}
+
+// ── Earth visible hemisphere target (which face we look at) ──
+let earthYawBias=0,earthYawBiasTarget=0;// extra rotation to favor a continent
+
+// ── Atmospheric pulse state ──
+let atmPulse=0,atmPulseDecay=0.96;
+
+// ── Particle burst (scene 9) ──
+let pBurstActive=false,pBurstT=0;
+const pBurstGeo=new THREE.BufferGeometry();
+const pBurstN=400;
+const pBurstPos=new Float32Array(pBurstN*3);
+const pBurstVel=new Float32Array(pBurstN*3);
+for(let i=0;i<pBurstN;i++){
+  const th=Math.random()*Math.PI*2,ph=Math.random()*Math.PI;
+  pBurstPos[i*3]=Math.sin(ph)*Math.cos(th)*2.1;
+  pBurstPos[i*3+1]=Math.sin(ph)*Math.sin(th)*2.1;
+  pBurstPos[i*3+2]=Math.cos(ph)*2.1;
+  const spd=.028+Math.random()*.052;
+  pBurstVel[i*3]=pBurstPos[i*3]*spd;
+  pBurstVel[i*3+1]=pBurstPos[i*3+1]*spd;
+  pBurstVel[i*3+2]=pBurstPos[i*3+2]*spd;
+}
+pBurstGeo.setAttribute('position',new THREE.BufferAttribute(pBurstPos.slice(),3));
+const pBurstMat=new THREE.PointsMaterial({color:0x44aaff,size:.055,transparent:true,opacity:0,sizeAttenuation:true});
+const pBurst=new THREE.Points(pBurstGeo,pBurstMat);
+scene.add(pBurst);
+
+function triggerPBurst(){
+  pBurstActive=true;pBurstT=0;pBurstMat.opacity=.82;
+  const pos=pBurstGeo.attributes.position;
+  for(let i=0;i<pBurstN;i++){
+    const th=Math.random()*Math.PI*2,ph=Math.random()*Math.PI;
+    pos.setXYZ(i,Math.sin(ph)*Math.cos(th)*2.1,Math.sin(ph)*Math.sin(th)*2.1,Math.cos(ph)*2.1);
+  }
+  pos.needsUpdate=true;
+}
+
+// ── Corona flare (scene 9/16) ──
+const coronaGeo=new THREE.SphereGeometry(2.38,32,32);
+const coronaMat=new THREE.MeshBasicMaterial({color:0x00c8ff,transparent:true,opacity:0,side:THREE.BackSide});
+const coronaMesh=new THREE.Mesh(coronaGeo,coronaMat);
+scene.add(coronaMesh);
+let coronaTarget=0,coronaCur=0;
+function setCorona(v,dur=800){
+  const s=coronaCur,t0=Date.now();
+  coronaTarget=v;
+  const step=()=>{const p=Math.min(1,(Date.now()-t0)/dur);coronaCur=s+(v-s)*p;coronaMat.opacity=coronaCur;if(p<1)requestAnimationFrame(step);};step();
+}
+
+// ── Cinematic look target per scene (adds gentle lookat bias) ──
+let lookOffX=0,lookOffY=0;// smooth current
+let lookTargX=0,lookTargY=0;// target
+
+// ── Earth rotation speed (smooth lerp) ──
+let curERSpd=.0018;
+
+// ── Scene transition flash ──
+let flashAlpha=0;
+function sceneFlash(col='rgba(0,180,255,'){
+  flashAlpha=.22;// will decay in loop
+}
+
+// ── Override setProg to hook cinematic system ──
+// Capture original implementation (defined above with function declaration)
+{
+  const _sp=setProg;
+  setProg=function(n){
+    // Original body: update progress bar
+    scN=n;pBar.classList.add('show');
+    pFill.style.width=((n/TOTAL)*100)+'%';
+    sn.textContent=`${String(n).padStart(2,'0')}/${TOTAL}`;
+    // Cinematic hooks
+    setCineScene(n);
+    setRingsForScene(n);
+    const biasMap={1:.0,2:.2,3:-.3,4:.0,5:.5,6:.0,7:.0,8:-.2,9:.0,
+                   14:.3,15:.8,16:.0,17:.4,18:-.3,19:.6,20:.2,21:-.5,
+                   22:.0,23:.3,24:.0,25:.7,26:.5,27:-.2,28:.3,29:.6,30:-.4,31:.0,32:.2};
+    earthYawBiasTarget=biasMap[n]||0;
+    sceneFlash();
+  };
+}
+
+// ── Moon angular position target (move moon to interesting position per scene) ──
+let moonAngTarget=0;
+const moonAngMap={1:.0,5:Math.PI*.3,8:Math.PI*.6,9:Math.PI,13:Math.PI*.4,
+                  14:.0,20:Math.PI*.2,22:Math.PI*.5,23:Math.PI*.8,24:.0,
+                  25:Math.PI*.3,26:Math.PI*.6,28:Math.PI*.8,31:Math.PI,32:Math.PI*.1};
+
+// ── Bloom per scene ──
+const bloomMap={1:1.15,2:1.2,3:1.4,4:1.2,5:1.1,6:2.0,7:1.2,8:1.8,
+                9:3.0,10:1.6,11:1.1,12:1.2,13:1.0,
+                14:1.2,15:1.5,16:2.6,17:1.4,18:1.5,19:1.2,
+                20:1.4,21:1.3,22:1.0,23:2.0,24:1.0,
+                25:1.3,26:1.6,27:1.6,28:1.3,29:1.4,30:1.2,31:1.0,32:1.3};
+
+function _getBloomForScene(n){return bloomMap[n]||1.15;}
+
+// setCineScene merged above (bloom + moon targeting included)
+
 function loop(){
   requestAnimationFrame(loop);fr++;
   const t=Date.now()*.001;
+  const dt=1/60;// nominal
 
-  // Earth & atmosphere
-  earth.rotation.y+=.0018;
-  atm.rotation.y+=.002;inner.rotation.y+=.002;halo.rotation.y+=.002;
+  // ── Earth rotation (lerp speed per scene) ──
+  curERSpd+=(cineERSpd-curERSpd)*0.008;
+  earth.rotation.y+=curERSpd;
+  atm.rotation.y+=curERSpd*1.08;
+  inner.rotation.y+=curERSpd*1.1;
+  halo.rotation.y+=curERSpd*1.05;
   atmMat.uniforms.uTime.value=t;
   haloMat.uniforms.uTime.value=t;
 
-  // Pulse the atmosphere on bass (handled by setGlow)
-  // Subtle breathe
-  const breathe=1+Math.sin(t*.4)*.012;
+  // Earth yaw bias (favors continent viewing)
+  earthYawBias+=(earthYawBiasTarget-earthYawBias)*0.004;
+
+  // Atmospheric breathe
+  const breatheSpd=.4+curERSpd*80;
+  const breathe=1+Math.sin(t*breatheSpd)*.012;
   atm.scale.setScalar(breathe);halo.scale.setScalar(breathe);
 
-  if(clouds)clouds.rotation.y+=.0028;
+  // Corona flare
+  coronaMesh.rotation.y=-earth.rotation.y*.8;// counter-rotate slightly
+  coronaMesh.scale.setScalar(1+Math.sin(t*2.3)*.03);
+
+  // Atmosphere pulse decay
+  atmPulse*=atmPulseDecay;
+  atmMat.uniforms.uPulse.value=atmPulse;
+
+  // Clouds
+  if(clouds)clouds.rotation.y+=curERSpd*1.52;
+
   // Moon orbit
-  moonPivot.rotation.y+=.00055;
+  // Lerp toward moon angle target for scene transitions
+  const moonAngDiff=moonAngTarget-moonPivot.rotation.y;
+  moonPivot.rotation.y+=moonAngDiff*0.003+.00055;
   moonPivot.rotation.z=Math.sin(t*.05)*.09;
   moonMesh.rotation.y+=.001;
   moonMesh.rotation.x=Math.sin(t*.04)*.012;// libration
+  moonMesh.rotation.z=Math.sin(t*.028)*.006;// secondary libration
+
+  // Stars slow drift
   stars.rotation.y+=.000028;stars.rotation.x+=.000012;stars.rotation.z+=.000008;
 
-  // Rings
-  ring1.rotation.z+=.001;ring2.rotation.z-=.0008;ring3.rotation.z+=.0004;ring3.rotation.x+=.00015;
+  // ── Rings — lerp opacity to scene targets ──
+  const [r1t,r2t,r3t,r4t]=ringTargetOp;
+  ring1.material.opacity+=((.18+Math.sin(t*1.1)*.12)*r1t/r1t - ring1.material.opacity)*0.04;
+  ring1.material.opacity=(.18+Math.sin(t*1.1)*.12)*(ringTargetOp[0]/.26);
+  ring2.material.opacity=(.08+Math.sin(t*.72+1)*.055)*(ringTargetOp[1]/.10);
+  ring3.material.opacity=(.025+Math.sin(t*.42+2)*.018)*(ringTargetOp[2]/.04);
+  // ring4 controlled by scene code
+  ring1.rotation.z+=.001;ring2.rotation.z-=.0008;
+  ring3.rotation.z+=.0004;ring3.rotation.x+=.00015;
   ring4.rotation.y+=.002;
-  ring1.material.opacity=.20+Math.sin(t*1.1)*.12;
-  ring2.material.opacity=.10+Math.sin(t*.72+1)*.065;
-  ring3.material.opacity=.03+Math.sin(t*.42+2)*.024;
 
-  // Satellites
+  // ── Satellites ──
   if(ePts){ePts.rotation.y+=.0006;ePts.rotation.x+=.00018;ePts.rotation.z+=Math.sin(t*.07)*.00008;}
   sats.forEach((s,i)=>{
     s.userData.ang+=s.userData.spd;
@@ -3235,28 +3447,59 @@ function loop(){
     const bp=beams[i].geometry.attributes.position;
     bp.setXYZ(0,s.position.x,s.position.y,s.position.z);bp.needsUpdate=true;
     const ping=Math.random()<.003?(.4+Math.random()*.3):0;
-    beams[i].material.opacity=.12+Math.sin(t*2+i)*.1+ping;
+    beams[i].material.opacity=.10+Math.sin(t*2+i)*.08+ping;
   });
 
-  // Camera
+  // ── Particle burst (scene 9 ascension drop) ──
+  if(pBurstActive){
+    pBurstT+=dt;
+    const pos=pBurstGeo.attributes.position;
+    for(let i=0;i<pBurstN;i++){
+      pos.setXYZ(i,
+        pos.getX(i)+pBurstVel[i*3],
+        pos.getY(i)+pBurstVel[i*3+1],
+        pos.getZ(i)+pBurstVel[i*3+2]
+      );
+    }
+    pos.needsUpdate=true;
+    pBurstMat.opacity=Math.max(0,.82-pBurstT*.28);
+    if(pBurstT>3){pBurstActive=false;pBurstMat.opacity=0;}
+  }
+
+  // ── CAMERA ──
+  // Z target (tZ) already controlled by scene code
   cZ+=(tZ-cZ)*.007;
   cam.position.z=cZ;
+
+  // Shake
   if(shk){cam.position.x=(Math.random()-.5)*shkS;cam.position.y=(Math.random()-.5)*shkS;}
-  else{cam.position.x*=.8;cam.position.y*=.8;}
-  // Slight auto orbit (default)
-  cam.position.x+=Math.sin(t*.08)*.004;
-  cam.position.y+=Math.cos(t*.06)*.003;
-  // Chapter III+ lateral orbital mode
+  else{cam.position.x*=.82;cam.position.y*=.82;}
+
+  // Cinematic auto-motion (per scene)
+  const autoX=Math.sin(t*cineRX*0.8)*cineRX*38;
+  const autoY=Math.cos(t*cineRY*0.6)*cineRY*28;
+  cam.position.x+=autoX*.14;
+  cam.position.y+=autoY*.10;
+
+  // Chapter III lateral orbit
   if(camOrbit){
     camOrbitAngle+=camOrbitSpeed;
     cam.position.x+=Math.sin(camOrbitAngle)*camOrbitR;
     cam.position.y+=Math.sin(camOrbitAngle*.38)*camOrbitR*.22;
   }
-  cam.lookAt(0,0,0);
 
-  // 2D updates
-  if(fr%2===0){drawRadar();drawScanRing();}
-  if(fr%3===0){drawWave();drawEM();drawThreat();drawBio();drawTraj();}
+  // ── Smooth camera lookat bias ──
+  lookOffX+=(cineLX-lookOffX)*0.012;
+  lookOffY+=(cineLY-lookOffY)*0.012;
+  cam.lookAt(lookOffX,lookOffY,cineLZ);
+
+  // ── Camera roll (very subtle tilt) ──
+  const rollTarget=Math.sin(t*.08)*0.012+camRollTarget;
+  cam.rotation.z+=(rollTarget-cam.rotation.z)*0.006;
+
+  // ── 2D canvas overlays ──
+  if(fr%2===0){drawRadar();drawScanRing();drawDualRing();}
+  if(fr%3===0){drawWave();drawEM();drawThreat();drawBio();drawTraj();if(bCv)drawSignal2(bCtx,bCv.width,bCv.height);}
   if(fr%30===0){updClock();updPop();updScan();updAurora();updTransit();}
   grain();drawChroma();
 
