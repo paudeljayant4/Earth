@@ -1,0 +1,22 @@
+{
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "rules": {
+    "no-undef": "warn",
+    "no-unused-vars": ["warn", { "varsIgnorePattern": "^_" }],
+    "no-console": "off",
+    "no-constant-condition": "warn",
+    "no-duplicate-case": "error",
+    "no-unreachable": "warn",
+    "eqeqeq": ["warn", "smart"],
+    "use-isnan": "error"
+  },
+  "globals": {
+    "THREE": "readonly",
+    "requestAnimationFrame": "readonly",
+    "AudioContext": "readonly",
+    "webkitAudioContext": "readonly"
+  }
+}

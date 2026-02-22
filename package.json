@@ -1,0 +1,18 @@
+{
+  "name": "ascension",
+  "version": "3.0.0",
+  "description": "ASCENSION — cinematic sci-fi Earth visualization",
+  "private": true,
+  "scripts": {
+    "sync": "node scripts/sync-from-standalone.js",
+    "sync:v3": "node scripts/sync-from-standalone.js --src ascension-standalone.html",
+    "sync:check": "node scripts/sync-from-standalone.js --src ascension-standalone.html --check",
+    "lint:html": "node scripts/lint-html.js",
+    "lint:js": "eslint script.js --no-eslintrc -c .eslintrc.json || true",
+    "check": "npm run sync:check && npm run lint:html",
+    "precommit": "npm run check"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  }
+}
