@@ -803,13 +803,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 
 <canvas id="bg"></canvas>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/shaders/LuminosityHighPassShader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/EffectComposer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/RenderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/ShaderPass.js"></script>
 <!-- APP_SCRIPT_START -->
 <script>
 'use strict';
+(function(){
 const isMob=window.innerWidth<769;
 const isLow=(navigator.hardwareConcurrency||8)<3||(isMob&&window.devicePixelRatio<1.5);
 const isMid=isMob&&!isLow;
@@ -822,8 +826,18 @@ const scene=new THREE.Scene();
 const cam=new THREE.PerspectiveCamera(58,W()/H(),.1,3000);
 cam.position.set(0,0,isMob?8.5:6.8);
 
+const bgCanvas=document.getElementById('bg');
+const hasWebGL=(()=>{try{return !!(window.WebGLRenderingContext&&(bgCanvas.getContext('webgl2')||bgCanvas.getContext('webgl')||bgCanvas.getContext('experimental-webgl')));}catch(e){console.warn('[ascension] WebGL probe failed',e);return false;}})();
+if(!hasWebGL){
+  const intro=document.getElementById('intro');
+  if(intro){
+    intro.style.display='flex';
+    intro.innerHTML='<div style="font-family:Orbitron,sans-serif;color:#fff;text-align:center;padding:24px;line-height:1.6;">WEBGL IS UNAVAILABLE IN THIS BROWSER/DEVICE.<br>PLEASE ENABLE HARDWARE ACCELERATION OR TRY A DIFFERENT BROWSER.</div>';
+  }
+  return;
+}
 const ren=new THREE.WebGLRenderer({
-  canvas:document.getElementById('bg'),
+  canvas:bgCanvas,
   antialias:!isLow,
   powerPreference:isLow?'low-power':'high-performance'
 });
@@ -1770,7 +1784,7 @@ void main(){
 
   // ── Ocean floor signal (Chapter III) ──
   float oceanLat=pow(1.-abs(vNormal.y+.14)*.84,4.2);
-  float oceanLon=pow(max(0.,-.vNormal.x*.58+.42),2.2);
+  float oceanLon=pow(max(0.,-vNormal.x*.58+.42),2.2);
   vec3 oceanCol=vec3(.0,.74,.60);
   float oceanStr=oceanLat*oceanLon*uOcean;
   col=mix(col,oceanCol,oceanStr*.58);
@@ -4294,7 +4308,7 @@ let started=false;
 function start(e){
   if(started)return;started=true;
   if(e)e.preventDefault();
-  try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}catch(_){/* fullscreen denied — OK */}
+  try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}catch(e){console.warn('[ascension] fullscreen denied',e);}
   initAudio();
   introEl.classList.add('out');
   setTimeout(()=>{introEl.style.display='none';run();},1400);
@@ -4311,6 +4325,7 @@ function onResize(){
 }
 window.addEventListener('resize',onResize);
 window.addEventListener('orientationchange',()=>setTimeout(onResize,350));
+})();
 </script>
 <!-- APP_SCRIPT_END -->
 </body>
