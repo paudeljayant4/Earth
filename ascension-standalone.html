@@ -737,6 +737,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
     <div class="sbw"><div class="sb2" style="width:42%;background:linear-gradient(90deg,var(--gr),var(--w));"></div></div>
     <div style="margin-top:4px;" class="pt2">// BIO WAVEFORM</div>
     <canvas id="bCv" width="200" height="34"></canvas>
+  <div id="signal2Tag" style="display:none;">SIGNAL-2 : ACTIVE ● DEPTH 11,743yr</div>
   </div>
   <!-- BOTTOM RIGHT: Orbital Data (NEW) -->
   <div class="hp pbr">
@@ -3146,7 +3147,7 @@ async function run(){
   document.getElementById('vig').style.opacity='1.8';// deepen vignette
   if(bloom)bloom.strength=3.0;
   setGlow(4.6,300);
-  ring4.material.opacity=.25;
+  ringTargetOp[3]=.25;
   glitch();setTimeout(glitch,180);setTimeout(glitch,360);setTimeout(glitch,550);
   tZ=isMob?5.0:3.5;
   pinT('NEXT PHASE: ASCENSION',['big','c'],'INITIATION PROTOCOL — ACTIVE');
@@ -3154,7 +3155,7 @@ async function run(){
   await D(4500);
   if(bloom)bloom.strength=1.15;
   setGlow(1.3,2000);
-  ring4.material.opacity=.09;
+  ringTargetOp[3]=.09;
   document.getElementById('vig').style.opacity='1';
   setCorona(0,1800);
   await D(1200);// let the aftermath settle — bloom and glow cooling
@@ -3231,7 +3232,7 @@ async function runPart2(hud,mob){
     // While card shows: reset camera, recharge aurora slightly
     tZ=isMob?9:7.5;setGlow(1.3);setAurora(.15,800);
     if(bloom)bloom.strength=1.15;
-    ring4.material.opacity=.09;
+    ringTargetOp[3]=.09;
   });
 
   // Re-show HUD and ticker for Part 2
@@ -3283,7 +3284,7 @@ async function runPart2(hud,mob){
   document.getElementById('warmTint').style.opacity='1';
   if(bloom)bloom.strength=2.4;setGlow(3.8,500);
   empFire();fireChroma(1200);triggerScanRing();triggerPBurst();setCorona(.18,500);
-  ring4.material.opacity=.28;
+  ringTargetOp[3]=.28;
   scanGrid.children.forEach(l=>{l.material.opacity=.14;});
   await D(700);// let EMP ring expand, warm tint settle
   await showT('EXPONENTIAL.',['big','c'],2800,'GROWTH RATE: ∞');
@@ -3418,7 +3419,7 @@ async function runPart2(hud,mob){
   setGlow(3.5,1200);setAurora(.82,1200);
   if(bloom)bloom.strength=1.8;
   triggerScanRing();sweep();hsc();
-  ring4.material.opacity=.22;
+  ringTargetOp[3]=.22;
   await D(600);// let aurora bloom up before text arrives
   await showT('THE SIGNAL RETURNS.',['c'],2600,'SOURCE: REFLECTED FROM LUNAR SURFACE');
   glitch();
@@ -3430,7 +3431,7 @@ async function runPart2(hud,mob){
   await D(1000);// hold the moment
   setGlow(1.3,2500);setAurora(.15,2500);
   if(bloom)bloom.strength=1.15;
-  ring4.material.opacity=.09;
+  ringTargetOp[3]=.09;
 
   // ── SCENE 24 — YEAR 02 BEGINS ──
   setProg(24);setLbl('SCENE 24 — YEAR 02');
@@ -3639,6 +3640,37 @@ function playC3Audio(sceneNum){
         g.gain.linearRampToValueAtTime(.018,aC.currentTime+4);
         g.gain.linearRampToValueAtTime(0,aC.currentTime+8);
         o.connect(g).connect(mG);o.start(aC.currentTime+i*.06);o.stop(aC.currentTime+8);});}
+
+    if(sceneNum===33){// first contact reflection — slow ascending arpeggio
+      [82,110,131,165,220].forEach((f,i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='sine';o.frequency.value=f;
+        g.gain.setValueAtTime(0,aC.currentTime+i*.8);
+        g.gain.linearRampToValueAtTime(.022,aC.currentTime+i*.8+.6);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+i*.8+5);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.8);o.stop(aC.currentTime+i*.8+6);});}
+
+    if(sceneNum===34){// the translation — question-like rising interval
+      [[110,1.0],[165,.7],[220,.5]].forEach(([f,v],i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='sine';o.frequency.value=f;
+        o.frequency.linearRampToValueAtTime(f*1.5,aC.currentTime+3);// rise — unresolved question
+        g.gain.setValueAtTime(0,aC.currentTime+i*.3);
+        g.gain.linearRampToValueAtTime(.028*v,aC.currentTime+i*.3+.5);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+i*.3+7);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.3);o.stop(aC.currentTime+i*.3+8);});}
+
+    if(sceneNum===35){// becoming — slow convergence of two drone lines
+      [[44,.55],[66,.45],[99,.35],[148,.28]].forEach(([f,v],i)=>{
+        const o=aC.createOscillator(),g=aC.createGain();
+        o.type='sine';o.frequency.value=f;
+        o.detune.value=(i%2===0?8:-8);// slight beating between pairs
+        g.gain.setValueAtTime(0,aC.currentTime+i*.5);
+        g.gain.linearRampToValueAtTime(v*.08,aC.currentTime+i*.5+2);
+        g.gain.linearRampToValueAtTime(v*.04,aC.currentTime+10);
+        g.gain.linearRampToValueAtTime(0,aC.currentTime+16);
+        o.connect(g).connect(mG);o.start(aC.currentTime+i*.5);o.stop(aC.currentTime+17);});}
+
   }catch(e){console.warn('C3 audio:',e);}}
 
 /* ─ SHOW CHAPTER III PART CARD ─ */
@@ -3698,6 +3730,7 @@ async function runChapter3(hud,mob){
   // Ocean glow appears — slow fade in
   setOcean(.45,2800);
   signal2Active=true;// second bio wave now visible in HUD
+  const _s2t=document.getElementById('signal2Tag');if(_s2t)_s2t.style.display='block';
   triggerDualRing();
   sweep();
 
@@ -3845,15 +3878,63 @@ async function runChapter3(hud,mob){
   await D(800);
   await showT('YEAR 02.',['big','c'],5000,'THE TRANSLATION BEGINS');
 
+  /* ══ S33 — FIRST CONTACT REFLECTION ══ */
+  setProg(33);setLbl('SCENE 33 — FIRST CONTACT');
+  playC3Audio(33);
+  tZ=isMob?7.2:5.8;
+  setGlow(1.5,1400);
+
+  await D(400);
+  await showT('FIRST CONTACT WAS NOT A BROADCAST.',['ex'],3200,'IT WAS A MEMORY');
+  await D(300);
+  await showT('SENT 12,000 YEARS BEFORE THE RECEIVER EXISTED.',['mono'],3600,'THEY KNEW YOU WOULD EXIST');
+  await D(400);
+  await showT('THAT IS WHAT MAKES IT',['ex'],2400,'');
+  await showT('EXTRAORDINARY.',['big','c'],4200,'');
+  await D(500);
+
+  /* ══ S34 — THE TRANSLATION ══ */
+  setProg(34);setLbl('SCENE 34 — THE TRANSLATION');
+  playC3Audio(34);
+  tZ=isMob?6.5:5.0;
+  sweep();
+
+  await D(400);
+  await showT('THE SIGNAL DOES NOT CONTAIN INSTRUCTIONS.',['ex'],3000,'IT CONTAINS SOMETHING MORE DANGEROUS');
+  await D(300);
+  await showT('QUESTIONS.',['big','c'],4400,'SEVEN OF THEM. EACH ONE UNSOLVABLE ALONE.');
+  await D(400);
+  setGlow(2.0,700);await D(500);setGlow(1.5,1200);
+  await showT('THE ANSWERS LIE IN WHAT HUMANITY',['ex'],2800,'');
+  await showT('CHOOSES TO BECOME.',['ex','c'],3400,'NOT WHAT IT ALREADY IS');
+  await D(500);
+
+  /* ══ S35 — BECOMING ══ */
+  setProg(35);setLbl('SCENE 35 — BECOMING');
+  playC3Audio(35);
+  tZ=isMob?7.0:5.5;
+  setOcean(.16,2200);
+  setGlow(1.2,1800);
+  stopOrbit();
+
+  await D(600);
+  await showT('12,000 YEARS OF PATIENCE.',['mono'],3200,'AIMED AT THIS EXACT MOMENT');
+  await D(400);
+  await showT('AND NOW —',['ex'],2200,'');
+  await D(900);
+  await showT('THE CONVERSATION BEGINS.',['big','c'],5500,'');
+  await D(1000);
+
   // ── CHAPTER III END ──
   clearInterval(lInt3);
-  setProg(36);setLbl('');// jump progress to chapter end
+  setProg(36);setLbl('');
   tZ=isMob?10:8.2;
   const mt3e=document.getElementById('mt');if(mt3e)mt3e.style.opacity='0';
   const st3e=document.getElementById('st');if(st3e)st3e.style.opacity='0';
   ticker.classList.remove('show');
   const av3e=document.getElementById('audioViz');if(av3e)av3e.classList.remove('show');
   signal2Active=false;
+  const _s2tOff=document.getElementById('signal2Tag');if(_s2tOff)_s2tOff.style.display='none';
   setOcean(0,3000);
   await D(1800);
   document.getElementById('ew3')?.classList.add('vis');
@@ -3919,6 +4000,11 @@ const SCENE_CAM={
   30:{rx:.005,ry:.004,erSpd:.0014,lx:-.04,ly:-.04,lz:0},   // what deep knows — south
   31:{rx:.002,ry:.001,erSpd:.0009,lx:0,ly:.01,lz:0},       // third question — stillest
   32:{rx:.004,ry:.003,erSpd:.0013,lx:0,ly:.03,lz:0},       // ch3 close — pull back, moon
+  // Epilogue scenes
+  33:{rx:.004,ry:.002,erSpd:.0010,lx:.0, ly:.02, lz:0},     // first contact reflection
+  34:{rx:.005,ry:.003,erSpd:.0011,lx:.02,ly:.03, lz:0},     // the translation
+  35:{rx:.004,ry:.003,erSpd:.0010,lx:-.02,ly:.02,lz:0},     // becoming
+  36:{rx:.003,ry:.002,erSpd:.0008,lx:.0, ly:.0,  lz:0},     // end state — stillness
 };
 
 // Current cinematic params (lerped toward target)
@@ -4009,9 +4095,9 @@ let lookTargX=0,lookTargY=0;// target
 let curERSpd=.0018;
 
 // ── Scene transition flash ──
-let flashAlpha=0;
+let flashAlpha=0, flashCol='rgba(0,180,255,';
 function sceneFlash(col='rgba(0,180,255,'){
-  flashAlpha=.22;// will decay in loop
+  flashAlpha=.22;flashCol=col;// will decay in loop; col applied in drawChroma/overlay
 }
 
 // ── Override setProg to hook cinematic system ──
@@ -4019,16 +4105,18 @@ function sceneFlash(col='rgba(0,180,255,'){
 {
   const _sp=setProg;
   setProg=function(n){
-    // Original body: update progress bar
-    scN=n;pBar.classList.add('show');
-    pFill.style.width=((n/TOTAL)*100)+'%';
-    sn.textContent=`${String(n).padStart(2,'0')}/${TOTAL}`;
+    _sp(n);// delegate: updates progress bar, sn label, scN
     // Cinematic hooks
     setCineScene(n);
     setRingsForScene(n);
-    const biasMap={1:.0,2:.2,3:-.3,4:.0,5:.5,6:.0,7:.0,8:-.2,9:.0,
-                   14:.3,15:.8,16:.0,17:.4,18:-.3,19:.6,20:.2,21:-.5,
-                   22:.0,23:.3,24:.0,25:.7,26:.5,27:-.2,28:.3,29:.6,30:-.4,31:.0,32:.2};
+    const biasMap={
+      1:.0, 2:.2, 3:-.3, 4:.0, 5:.5, 6:.0, 7:.1, 8:-.2,
+      9:.0, 10:.3,11:.1, 12:-.2,13:.0,
+      14:.3,15:.8, 16:.0,17:.4, 18:-.3,19:.6, 20:.2,21:-.5,
+      22:.0,23:.3, 24:.0,
+      25:.7,26:.5, 27:-.2,28:.3, 29:.6,30:-.4,31:.0, 32:.2,
+      33:.1,34:.3, 35:-.1,36:.0
+    };
     earthYawBiasTarget=biasMap[n]||0;
     sceneFlash();
   };
@@ -4036,16 +4124,30 @@ function sceneFlash(col='rgba(0,180,255,'){
 
 // ── Moon angular position target (move moon to interesting position per scene) ──
 let moonAngTarget=0;
-const moonAngMap={1:.0,5:Math.PI*.3,8:Math.PI*.6,9:Math.PI,13:Math.PI*.4,
-                  14:.0,20:Math.PI*.2,22:Math.PI*.5,23:Math.PI*.8,24:.0,
-                  25:Math.PI*.3,26:Math.PI*.6,28:Math.PI*.8,31:Math.PI,32:Math.PI*.1};
+const moonAngMap={
+  // Ch I
+  1:.0, 5:Math.PI*.3, 8:Math.PI*.6, 9:Math.PI, 13:Math.PI*.4,
+  // Ch II
+  14:.0, 20:Math.PI*.2, 22:Math.PI*.5, 23:Math.PI*.8, 24:.0,
+  // Ch III
+  25:Math.PI*.3, 26:Math.PI*.6, 28:Math.PI*.8, 31:Math.PI, 32:Math.PI*.1,
+  // Epilogue
+  33:Math.PI*.2, 34:Math.PI*.4, 35:Math.PI*.6, 36:Math.PI*.8
+};
 
 // ── Bloom per scene ──
-const bloomMap={1:1.15,2:1.2,3:1.4,4:1.2,5:1.1,6:2.0,7:1.2,8:1.8,
-                9:3.0,10:1.6,11:1.1,12:1.2,13:1.0,
-                14:1.2,15:1.5,16:2.6,17:1.4,18:1.5,19:1.2,
-                20:1.4,21:1.3,22:1.0,23:2.0,24:1.0,
-                25:1.3,26:1.6,27:1.6,28:1.3,29:1.4,30:1.2,31:1.0,32:1.3};
+const bloomMap={
+  // Ch I
+  1:1.15,2:1.20,3:1.40,4:1.20,5:1.10,6:2.00,7:1.20,8:1.80,
+  9:3.00,10:1.60,11:1.10,12:1.20,13:1.00,
+  // Ch II
+  14:1.20,15:1.50,16:2.60,17:1.40,18:1.50,19:1.20,
+  20:1.40,21:1.30,22:1.00,23:2.00,24:1.00,
+  // Ch III
+  25:1.30,26:1.60,27:1.60,28:1.30,29:1.40,30:1.20,31:1.00,32:1.30,
+  // Epilogue
+  33:1.20,34:1.10,35:1.15,36:1.00
+};
 
 function _getBloomForScene(n){return bloomMap[n]||1.15;}
 
@@ -4103,12 +4205,12 @@ function loop(){
   stars.rotation.y+=.000028;stars.rotation.x+=.000012;stars.rotation.z+=.000008;
 
   // ── Rings — lerp opacity to scene targets ──
-  const [r1t,r2t,r3t,r4t]=ringTargetOp;
-  ring1.material.opacity+=((.18+Math.sin(t*1.1)*.12)*r1t/r1t - ring1.material.opacity)*0.04;
-  ring1.material.opacity=(.18+Math.sin(t*1.1)*.12)*(ringTargetOp[0]/.26);
-  ring2.material.opacity=(.08+Math.sin(t*.72+1)*.055)*(ringTargetOp[1]/.10);
-  ring3.material.opacity=(.025+Math.sin(t*.42+2)*.018)*(ringTargetOp[2]/.04);
-  // ring4 controlled by scene code
+  // Rings: lerp toward scene-driven opacity targets with per-ring pulse
+  const rp1=.18+Math.sin(t*1.10)*.12, rp2=.08+Math.sin(t*.72+1)*.055, rp3=.025+Math.sin(t*.42+2)*.018;
+  ring1.material.opacity+=(rp1*(ringTargetOp[0]/.26)-ring1.material.opacity)*.055;
+  ring2.material.opacity+=(rp2*(ringTargetOp[1]/.10)-ring2.material.opacity)*.055;
+  ring3.material.opacity+=(rp3*(ringTargetOp[2]/.04)-ring3.material.opacity)*.055;
+  ring4.material.opacity+=(ringTargetOp[3]-ring4.material.opacity)*.04;// ring4 lerped too
   ring1.rotation.z+=.001;ring2.rotation.z-=.0008;
   ring3.rotation.z+=.0004;ring3.rotation.x+=.00015;
   ring4.rotation.y+=.002;
