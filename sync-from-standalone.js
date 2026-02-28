@@ -42,7 +42,9 @@ const OUT = {
 };
 
 const CDN_SCRIPTS = [
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128/build/three.min.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128/examples/js/shaders/CopyShader.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128/examples/js/shaders/LuminosityHighPassShader.js',
   'https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/EffectComposer.js',
   'https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/RenderPass.js',
   'https://cdn.jsdelivr.net/npm/three@0.128/examples/js/postprocessing/UnrealBloomPass.js',
