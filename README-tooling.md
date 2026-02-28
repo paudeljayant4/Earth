@@ -8,13 +8,13 @@ Never edit `index.html`, `style.css`, or `script.js` directly — they are gener
 ## Regenerate split files
 
 ```bash
-node scripts/sync-from-standalone.js
+node sync-from-standalone.js
 ```
 
 ## Verify sync parity (no-write, exits 1 if drift)
 
 ```bash
-node scripts/sync-from-standalone.js --check
+node sync-from-standalone.js --check
 # or:
 npm run sync:check
 ```
@@ -32,7 +32,7 @@ This runs:
 ## Install the pre-commit hook
 
 ```bash
-cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+cp pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 ```
 
 The hook runs `sync:check` and `lint:html` on every `git commit`.
@@ -40,7 +40,7 @@ The hook runs `sync:check` and `lint:html` on every `git commit`.
 ## Use an alternate source file
 
 ```bash
-node scripts/sync-from-standalone.js --src path/to/other.html
+node sync-from-standalone.js --src path/to/other.html
 ```
 
 ## Extraction markers
@@ -84,4 +84,4 @@ Without these markers, the sync script falls back to heuristics (first `<style>`
 | Full-frame ImageData grain each frame | Tiled 128×128 noise upscaled — ~10× less memory bandwidth |
 | No visibilitychange throttling | Loop skips render when tab is hidden |
 | No DO-NOT-EDIT banners | All generated files now carry banners |
-| No pre-commit enforcement | `scripts/pre-commit` hook provided |
+| No pre-commit enforcement | `pre-commit` hook provided |

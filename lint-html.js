@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * scripts/lint-html.js
+ * lint-html.js
  * Validates index.html for common structural issues:
  *   - Duplicate IDs
  *   - Missing required elements
@@ -24,7 +24,7 @@ const ok   = msg => { console.log  (`[lint:html]   ✓ ${msg}`); };
 
 let warnings = 0;
 
-if (!fs.existsSync(indexPath))  die('index.html not found — run: node scripts/sync-from-standalone.js');
+if (!fs.existsSync(indexPath))  die('index.html not found — run: node sync-from-standalone.js');
 if (!fs.existsSync(scriptPath)) die('script.js not found');
 if (!fs.existsSync(stylePath))  die('style.css not found');
 

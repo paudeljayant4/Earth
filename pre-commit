@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+node sync-from-standalone.js --check
+node lint-html.js
