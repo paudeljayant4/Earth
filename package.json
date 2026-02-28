@@ -1,0 +1,12 @@
+{
+  "name": "ascension-tooling",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Tooling scripts for keeping split files synced with ascension-standalone.html",
+  "scripts": {
+    "sync": "node sync-from-standalone.js",
+    "sync:check": "node sync-from-standalone.js --check",
+    "lint:html": "node lint-html.js",
+    "check": "npm run sync:check && npm run lint:html"
+  }
+}
